@@ -1,0 +1,1469 @@
+<!DOCTYPE html>
+<html lang="fr"><head>
+<meta charset="utf-8"><title>CAM appli</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;800&family=Figtree:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@2.0.4/dist/qrcode.js"></script>
+<style>
+/* ===== 1. ÉCRAN D'ENTRÉE (connexion, accueil, accès) ===== */
+:root{--bg:#0a0a0a;--card:#141414;--tx:#f5f5f5;--mu:#a8a8a8;--ac:#ff4655;--bd:#2a2a2a;--on:#fff;--red:#d91e2e;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--tx);font:16px/1.45 system-ui,sans-serif}
+[hidden]{display:none!important}
+.launch .wrap{max-width:720px;margin:0 auto;padding:max(16px,env(safe-area-inset-top)) 16px 40px}
+.launch header{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.launch .logo{width:48px;height:48px;border-radius:50%;background:var(--ac);color:var(--on);display:grid;place-items:center;font-weight:800;font-size:.85em;flex:none}
+.launch h1{font-size:1.25em;margin:0}
+.launch h2{font-size:1.05em;margin:0 0 8px;color:var(--ac)}
+.launch .mu{color:var(--mu);font-size:.9em}
+.launch input,.launch button{font:inherit;font-size:16px;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:10px;min-height:46px;width:100%}
+.launch button{cursor:pointer;width:auto}
+.launch .pri{background:var(--ac);color:var(--on);border:0;font-weight:700;width:100%}
+.launch .card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px;margin-bottom:12px}
+.launch .box{max-width:400px;margin:12vh auto 0}
+.launch label{display:block;font-size:.85em;color:var(--mu);margin:10px 0 4px}
+.launch .err{color:var(--ac);min-height:1.4em;margin:8px 0 0}
+.launch .code{letter-spacing:.3em;text-align:center;font-size:22px}
+.launch .tiles{display:grid;gap:12px;grid-template-columns:1fr}
+@media(min-width:600px){.launch .tiles{grid-template-columns:1fr 1fr}}
+.launch .tile{display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;padding:18px;width:100%;min-height:130px;border-left:5px solid var(--ac)}
+.launch .tile .i{font-size:2rem}
+.launch .tile b{font-size:1.1em}
+.launch .li{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:10px 0;border-top:1px solid var(--bd)}
+.launch .ck{display:flex;align-items:center;gap:8px;margin:6px 0;color:var(--tx);font-size:1em}
+.launch .ck input{width:22px;min-height:0;height:22px}
+#view{position:fixed;inset:0;display:flex;flex-direction:column;background:var(--bg);z-index:10}
+#bar{display:flex;align-items:center;gap:10px;padding:max(8px,env(safe-area-inset-top)) 12px 8px;border-bottom:3px solid var(--ac)}
+.launch 
+.launch .card{border-radius:10px;box-shadow:none}
+.launch .pri{background:var(--red);color:#fff;border-radius:8px}
+.launch .logo{background:var(--red);color:#fff;border-radius:10px}
+.launch .tile{border-left:6px solid var(--red);transition:background .15s}
+.launch .tile:hover{background:#1c1c1c}
+#bar{background:var(--card);border-bottom:3px solid var(--red)}
+.launch h1{letter-spacing:.3px}
+.launch #gate:not([hidden]){display:grid;place-items:center;min-height:100%}
+.launch #gate .box{margin:0;width:100%;max-width:400px;padding:32px 26px;border-radius:28px;text-align:center}
+.launch #gate .logo{width:76px;height:76px;border-radius:50%;font-size:1.15em;margin:0 auto 16px;box-shadow:0 0 0 8px rgba(217,30,46,.18)}
+.launch #gate input{border-radius:16px;min-height:54px;background:#0a0a0a}
+.launch #gate .pw{display:flex;gap:8px}
+.launch #gate .pw button{width:54px;min-height:54px;padding:0;border-radius:16px}
+.launch #gate .pri{border-radius:16px;min-height:54px;font-size:17px;margin-top:10px}
+.launch #gate label{text-align:left}
+.launch .seg{display:flex;background:#0a0a0a;border:1px solid var(--bd);border-radius:16px;padding:4px;gap:4px;margin:14px 0 4px}
+.launch .seg button{flex:1;border:0;background:none;border-radius:12px;min-height:44px;color:var(--mu);font-weight:600}
+.launch .seg button.on{background:var(--red);color:#fff}
+.launch .lnk{background:none;border:0;color:var(--ac);text-decoration:underline;width:100%;margin-top:8px;min-height:40px}
+.launch .li.col{flex-direction:column;align-items:stretch;gap:6px}
+.launch #gate select{border-radius:16px;min-height:54px;background:#0a0a0a}
+.launch #gate .logo{display:block;width:auto;height:auto;background:none;border-radius:0;box-shadow:none;margin:0 0 8px auto;text-align:right;font-size:2.2rem;font-weight:900;letter-spacing:.14em;line-height:1;color:var(--red)}
+#apps{position:relative;flex:1;min-height:0}
+.app{position:absolute;inset:0;overflow:auto;box-sizing:border-box;background:var(--bg);color:var(--tx)}
+.app>.abd{min-height:100%}
+#lockscr,#srv{position:fixed;inset:0;z-index:60;background:var(--bg);display:grid;place-items:center;overflow:auto;padding:16px}
+#lockscr .box,#srv .box{margin:0;width:100%;max-width:400px;padding:32px 26px;border-radius:28px;text-align:center}
+#lockscr .logo,#srv .logo{display:block;width:auto;height:auto;background:none;border-radius:0;margin:0 0 8px auto;text-align:right;font-size:2.2rem;font-weight:900;letter-spacing:.14em;line-height:1;color:var(--red)}
+#lockscr input,#srv input{border-radius:16px;min-height:54px;background:#0a0a0a}
+#lockscr .pri,#srv .pri{border-radius:16px;min-height:54px;font-size:17px;margin-top:10px}
+#lockscr label,#srv label{text-align:left}
+.launch [data-lkp]{flex:1}
+
+/* ===== 2. PAGE DE CONNEXION COMMUNE ===== */
+#cauth{position:absolute;inset:0;z-index:9999;background:#0a0a0a;display:none;place-items:center;overflow:auto;padding:16px;color:#f5f5f5;font:16px/1.45 system-ui,sans-serif}
+#cauth.on{display:grid}#cauth [hidden]{display:none!important}
+#cauth .bx{width:100%;max-width:400px;background:#141414;border:1px solid #2a2a2a;border-radius:28px;padding:32px 26px;text-align:center}
+#cauth .lg{display:block;text-align:right;color:#d91e2e;font-weight:900;font-size:2.2rem;letter-spacing:.14em;line-height:1;margin-bottom:8px}
+#cauth h1{font-size:1.25em;margin:0 0 4px;color:#fff;font-family:system-ui,sans-serif;letter-spacing:0}#cauth p{color:#a8a8a8;font-size:.9em;margin:0}
+#cauth label{display:block;text-align:left;font-size:.85em;color:#a8a8a8;margin:10px 0 4px}
+#cauth input,#cauth select,#cauth button{font:inherit;font-size:16px;color:#f5f5f5;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:16px;padding:10px 12px;min-height:54px;width:100%;margin:0}
+#cauth button{cursor:pointer;width:auto}
+#cauth .pri{background:#d91e2e;border:0;font-weight:700;width:100%;margin-top:10px;color:#fff;font-size:17px}
+#cauth .seg{display:flex;background:#0a0a0a;border:1px solid #2a2a2a;border-radius:16px;padding:4px;gap:4px;margin:14px 0 4px}
+#cauth .seg button{flex:1;border:0;background:none;border-radius:12px;min-height:44px;color:#a8a8a8;font-weight:600}
+#cauth .seg .on{background:#d91e2e;color:#fff}
+#cauth .lnk{background:none;border:0;color:#ff4655;text-decoration:underline;width:100%;margin-top:8px;min-height:40px}
+#cauth .pw{display:flex;gap:8px}#cauth .pw button{width:54px;padding:0}
+#cauth .er{color:#ff4655;min-height:1.3em;margin:8px 0 0}
+
+/* ===== APPLICATION : Gestion des membres ===== */
+.app-membres{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#0a1428;--card:#122040;--tx:#fff;--mu:#9fb0cf;--ac:#F01E1E;--bd:#243a66;color-scheme:dark}
+.app-membres{scroll-padding-top:env(safe-area-inset-top,0px)}
+.app-membres *{box-sizing:border-box}
+.app-membres{font-size:calc(var(--fs,100)*1%)}
+.app-membres>.abd{margin:0 auto;background:var(--bg);color:var(--tx);font:clamp(1em,.9em + .4vw,1.2em)/1.45 system-ui,-apple-system,sans-serif;padding:clamp(12px,3vw,28px);max-width:1000px;-webkit-text-size-adjust:100%}
+.app-membres h1{font-size:1.6em;margin:4px 0}
+.app-membres .card{box-shadow:0 1px 6px rgba(240,30,30,.18)}
+.app-membres .stat{border-top:3px solid var(--ac)}
+.app-membres input:focus,.app-membres select:focus,.app-membres textarea:focus{outline:2px solid var(--ac);border-color:var(--ac)}
+.app-membres .fz button{color:var(--ac);border-color:var(--ac)}
+.app-membres h1 span{color:var(--ac)}
+.app-membres .sub{color:var(--mu);font-size:.9em;margin-bottom:14px}
+.app-membres .top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.app-membres .fz{display:flex;gap:6px}
+.app-membres .fz button{min-width:44px;padding:8px}
+.app-membres .stats{display:flex;gap:8px;margin-bottom:12px}
+.app-membres .stat{flex:1;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:10px;text-align:center}
+.app-membres .stat b{display:block;font-size:1.5em;color:var(--ac)}
+.app-membres .stat small{color:var(--mu);font-size:.8em}
+.app-membres input,.app-membres select,.app-membres textarea,.app-membres button{font:inherit;font-size:max(16px,1em);min-height:44px;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:10px;width:100%}
+.app-membres button{cursor:pointer;width:auto}
+.app-membres .pri{background:var(--ac);color:#fff;border:0;font-weight:600}
+.app-membres .row{display:flex;gap:8px;margin-bottom:10px}
+.app-membres .card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:8px}
+.app-membres .card h3{margin:0;font-size:1.1em}
+.app-membres .meta{color:var(--mu);font-size:.9em;word-break:break-word}
+.app-membres .tag{display:inline-block;font-size:.8em;padding:2px 8px;border-radius:99px;border:1px solid var(--bd);margin:4px 4px 0 0}
+.app-membres .ok{color:#fff;background:var(--ac);border-color:var(--ac)}
+.app-membres .ko{color:var(--ac);background:transparent;border-color:var(--ac)}
+.app-membres .act{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.app-membres .act button{padding:8px 12px;font-size:.9em;flex:1 1 auto}
+.app-membres #form{display:none;position:fixed;left:0;right:0;bottom:0;margin:0 auto;max-width:680px;max-height:92vh;overflow:auto;border-radius:20px 20px 0 0;z-index:30;padding:18px 18px calc(18px + env(safe-area-inset-bottom));border-top:3px solid var(--ac)}
+.app-membres #bd{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:20}
+.app-membres #form label{display:block;font-size:.85em;color:var(--mu);margin:8px 0 3px}
+.app-membres .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.app-membres .row{flex-wrap:wrap}
+.app-membres .row>input{flex:1 1 200px}
+.app-membres #list{display:grid;grid-template-columns:1fr;gap:10px}
+.app-membres #list .card{margin:0}
+@media (max-width:420px){.app-membres .grid{grid-template-columns:1fr}
+.app-membres .stats{gap:6px}
+.app-membres .stat{padding:8px 4px}}
+@media (min-width:700px){.app-membres #list{grid-template-columns:1fr 1fr}
+.app-membres .grid{grid-template-columns:repeat(3,1fr)}}
+@media (min-width:1100px){.app-membres #list{grid-template-columns:repeat(3,1fr)}}
+.app-membres #note{color:var(--mu);font-size:.85em;text-align:center;margin:8px 0}
+.app-membres input[type=date]{-webkit-appearance:none;appearance:none;display:block;width:100%;height:44px;min-width:0;text-align:left;line-height:1.2;background:var(--card)}
+.app-membres input[type=date]::-webkit-date-and-time-value{text-align:left;margin:0;min-height:1.2em}
+.app-membres input[type=date]::-webkit-calendar-picker-indicator{color:var(--ac);opacity:.9}
+.app-membres #form input,.app-membres #form select,.app-membres #form textarea{height:44px}
+.app-membres #form textarea{height:auto}
+.app-membres>.abd{padding-top:0}
+.app-membres .bar{position:sticky;top:0;z-index:10;display:flex;justify-content:space-between;align-items:center;gap:8px;margin:0 calc(-1*clamp(12px,3vw,28px)) 16px;padding:12px clamp(12px,3vw,28px);background:linear-gradient(135deg,#0a1428,#1b2f5c);border-bottom:3px solid var(--ac)}
+.app-membres .brand{display:flex;align-items:center;gap:12px}
+.app-membres .brand h1{font-size:1.15em;margin:0}
+.app-membres .brand .sub{margin:0;font-size:.8em}
+.app-membres .logo{width:46px;height:46px;border-radius:50%;background:var(--ac);color:#fff;display:grid;place-items:center;font-weight:800;font-size:.85em;letter-spacing:.5px;flex:none}
+.app-membres main{padding-bottom:90px}
+.app-membres #add{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom));width:60px;height:60px;min-height:60px;border-radius:50%;font-size:32px;line-height:1;padding:0;z-index:15;box-shadow:0 6px 18px rgba(240,30,30,.5)}
+.app-membres .hd{display:flex;align-items:center;gap:12px}
+.app-membres .av{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--ac),#8a0f1c);color:#fff;display:grid;place-items:center;font-weight:700;flex:none}
+.app-membres .card{border-radius:16px}
+.app-membres .stat{border-radius:16px}
+.app-membres #auth{display:none;position:fixed;inset:0;z-index:50;background:var(--bg);overflow:auto;padding:20px;align-items:center;justify-content:center}
+.app-membres #auth .box{width:100%;max-width:400px;margin:auto;padding:22px}
+.app-membres #auth label{display:block;font-size:.85em;color:var(--mu);margin:10px 0 3px}
+.app-membres .pw{display:flex;gap:6px}
+.app-membres .pw button{width:50px;padding:0}
+.app-membres>.abd.locked main,.app-membres>.abd.locked #add{display:none!important}
+.app-membres #ap,.app-membres #ap2{letter-spacing:.15em;text-align:center;min-width:0;font-size:20px}
+.app-membres .pw input{flex:1;min-width:0}
+
+/* ===== APPLICATION : Base de données CAM ===== */
+.app-eglises{color-scheme:dark;--bg:#000;--card:#141414;--ink:#f5f5f5;--mute:#a3a3a3;--line:#2e2e2e;--acc:#ff8a00;--accink:#000;--gold:#ffb020;--ok:#25a85a;--warn:#ff6a3d;--t-xl:1.75rem;--t-lg:1.25rem;--t-md:1rem;--t-sm:.95rem;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.app-eglises{scroll-padding-top:env(safe-area-inset-top,0px)}
+.app-eglises *{box-sizing:border-box}
+.app-eglises>.abd{margin:0;background:var(--bg);color:var(--ink);font:17px/1.5 Figtree,system-ui,sans-serif;-webkit-text-size-adjust:100%}
+.app-eglises main{max-width:860px;margin:0 auto;padding:14px 14px 100px}
+.app-eglises h1{font:800 var(--t-xl)/1.1 Fraunces,Georgia,serif;margin:0;color:#fff}
+.app-eglises h2{font:600 var(--t-lg)/1.25 Fraunces,Georgia,serif;margin:0 0 10px}
+.app-eglises input,.app-eglises select,.app-eglises textarea,.app-eglises button{font:inherit;font-size:var(--t-md);color:inherit}
+.app-eglises input,.app-eglises select,.app-eglises textarea{width:100%;min-height:48px;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--card);font-size:16px}
+.app-eglises textarea{min-height:90px}
+.app-eglises input:focus,.app-eglises select:focus,.app-eglises textarea:focus,.app-eglises button:focus-visible,.app-eglises a:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+.app-eglises button{min-height:46px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:var(--card);cursor:pointer}
+.app-eglises button.p{background:var(--acc);color:var(--accink);border-color:var(--acc);font-weight:600}
+.app-eglises button.d{border-color:var(--warn);color:var(--warn)}
+.app-eglises label{display:block;font-size:var(--t-sm);color:var(--mute);margin-bottom:5px}
+.app-eglises header{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;margin-bottom:12px}
+.app-eglises #eg{background:none;border:0;padding:0;min-height:0;color:var(--acc);text-align:left;font-size:var(--t-md)}
+.app-eglises .tabs{display:flex;gap:6px;margin-bottom:14px;border-bottom:1px solid var(--line)}
+.app-eglises .tab{border:0;border-radius:8px 8px 0 0;background:none;color:var(--mute);font-weight:600;border-bottom:3px solid transparent}
+.app-eglises .tab.on{color:var(--acc);border-bottom-color:var(--acc)}
+.app-eglises .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.app-eglises .st{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;text-align:left;display:block;min-height:0}
+.app-eglises .st b{display:block;font:800 2rem/1 Fraunces,Georgia,serif;color:var(--acc)}
+.app-eglises .st.hot b{color:var(--warn)}
+.app-eglises .st span{font-size:var(--t-sm);color:var(--mute)}
+.app-eglises .bar,.app-eglises .row{display:flex;gap:8px;margin-bottom:10px}
+.app-eglises .bar>*{flex:1}
+.app-eglises .bar>.fit{flex:0 0 auto}
+.app-eglises .chips{display:flex;gap:6px;overflow-x:auto;margin-bottom:12px;padding-bottom:2px}
+.app-eglises .chip{border-radius:99px;flex:0 0 auto;padding:0 16px;min-height:42px}
+.app-eglises .chip.on{background:var(--acc);color:#000;border-color:var(--acc);font-weight:600}
+.app-eglises .banner{border:1px solid var(--warn);border-radius:10px;padding:12px 14px;margin-bottom:12px;display:flex;gap:10px;align-items:center;justify-content:space-between}
+.app-eglises .bday{border:1px solid var(--gold);border-radius:10px;padding:14px 16px;margin-bottom:12px}
+.app-eglises .bd{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
+.app-eglises .bd.today{color:var(--gold);font-weight:600}
+.app-eglises .bd a{background:var(--ok);color:#fff;text-decoration:none;border-radius:8px;padding:0 14px;min-height:42px;display:flex;align-items:center}
+.app-eglises .card{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--c,var(--acc));border-radius:10px;padding:14px 16px;margin-bottom:10px}
+.app-eglises .card.sel{outline:2px solid var(--acc)}
+.app-eglises .top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.app-eglises .top>label{margin:0;display:flex;gap:10px;align-items:flex-start;color:var(--ink);flex:1}
+.app-eglises .ck{width:24px;height:24px;min-height:0;padding:0;flex:0 0 auto;accent-color:var(--acc);margin-top:3px}
+.app-eglises .card h3{font:600 var(--t-lg)/1.25 Fraunces,Georgia,serif;margin:0}
+.app-eglises .meta{color:var(--mute);font-size:var(--t-sm);margin:4px 0}
+.app-eglises .badge{font-size:var(--t-sm);font-weight:600;color:var(--c);border:1px solid var(--c);border-radius:99px;padding:2px 11px}
+.app-eglises .late{color:var(--warn);font-weight:600}
+.app-eglises .btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.app-eglises .btns a,.app-eglises .btns button{display:flex;align-items:center;justify-content:center;min-height:46px;border-radius:8px;border:1px solid var(--line);color:var(--ink);text-decoration:none;background:var(--card);padding:0 8px}
+.app-eglises .btns a.wa{background:var(--ok);border-color:var(--ok);color:#fff}
+.app-eglises .empty{text-align:center;color:var(--mute);padding:30px 8px}
+.app-eglises .sel-bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:4;background:var(--card);border:1px solid var(--acc);border-radius:10px;padding:10px;margin-bottom:10px;display:none;gap:8px;flex-wrap:wrap;align-items:center}
+.app-eglises .sel-bar.on{display:flex}
+.app-eglises .sel-bar select{width:auto;flex:1;min-width:130px}
+.app-eglises .panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:12px}
+.app-eglises .br{display:grid;grid-template-columns:110px 1fr 34px;gap:8px;align-items:center;margin:7px 0;font-size:var(--t-sm)}
+.app-eglises .br i{display:block;height:12px;border-radius:6px;background:var(--acc);min-width:2px}
+.app-eglises .br em{font-style:normal;color:var(--mute);text-align:right}
+.app-eglises .g{display:grid;grid-template-columns:1fr;gap:14px}
+.app-eglises .w{grid-column:1/-1}
+.app-eglises .two{display:grid;grid-template-columns:1fr;gap:12px}
+.app-eglises .list2{list-style:none;margin:0;padding:0}
+.app-eglises .list2 li{padding:9px 0;border-top:1px solid var(--line);font-size:var(--t-sm);display:flex;justify-content:space-between;gap:8px;align-items:center}
+.app-eglises .col{display:flex;flex-direction:column;gap:10px}
+.app-eglises dialog{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:0;width:calc(100% - 24px);max-width:660px;max-height:92vh}
+.app-eglises dialog::backdrop{background:rgba(0,0,0,.75)}
+.app-eglises dialog>form,.app-eglises dialog>div{padding:16px}
+.app-eglises .act{display:flex;flex-direction:column-reverse;gap:8px;margin-top:16px}
+.app-eglises #add{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:5;border-radius:99px;padding:0 22px;min-height:54px;box-shadow:0 6px 18px rgba(255,138,0,.35)}
+.app-eglises #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:#fff;color:#000;border-radius:10px;padding:10px 14px;z-index:9;display:none;gap:12px;align-items:center;max-width:92%}
+.app-eglises #toast button{min-height:34px;background:var(--acc);color:#000;border:0;font-weight:600}
+.app-eglises .lg{border-top:1px solid var(--line);padding:9px 0;font-size:var(--t-sm)}
+.app-eglises .lg b{color:var(--acc)}
+.app-eglises #lock{padding:16px}
+.app-eglises #lock .panel{max-width:420px;margin:10vh auto 0}
+.app-eglises>.abd.locked main,.app-eglises>.abd.locked #add,.app-eglises>.abd.locked #toast{display:none!important}
+@media (min-width:700px){.app-eglises .g{grid-template-columns:1fr 1fr}
+.app-eglises .stats{grid-template-columns:repeat(4,1fr)}
+.app-eglises .act{flex-direction:row;justify-content:flex-end}
+.app-eglises .two{grid-template-columns:1fr 1fr}
+.app-eglises .btns{display:flex;flex-wrap:wrap}
+.app-eglises .btns>*{padding:0 14px}}
+@media print{.app-eglises>.abd{background:#fff;color:#000}
+.app-eglises .tabs,.app-eglises .bar,.app-eglises .chips,.app-eglises #add,.app-eglises .btns,.app-eglises .sel-bar,.app-eglises .banner,.app-eglises .ck,.app-eglises #toast,.app-eglises .noprint{display:none!important}
+.app-eglises .card,.app-eglises .panel{border-color:#999;background:#fff;break-inside:avoid}
+.app-eglises .meta,.app-eglises .st span{color:#333}
+.app-eglises h1,.app-eglises .st b{color:#000}}
+
+/* ===== APPLICATION : Présence ===== */
+.app-pres{--bg:#0a0a0a;--card:#141414;--tx:#f5f5f5;--mu:#a8a8a8;--ac:#ff4655;--bd:#2a2a2a;--red:#d91e2e;--ok:#25a85a;color-scheme:dark}
+.app-pres *{box-sizing:border-box}
+.app-pres>.abd{margin:0;background:var(--bg);color:var(--tx);font:16px/1.45 system-ui,sans-serif}
+.app-pres [hidden]{display:none!important}
+.app-pres .w{max-width:760px;margin:0 auto;padding:max(14px,env(safe-area-inset-top)) 14px 60px}
+.app-pres h1{font-size:1.4em;margin:0}
+.app-pres h2{font-size:1.05em;margin:0 0 8px;color:var(--ac)}
+.app-pres .mu{color:var(--mu);font-size:.9em}
+.app-pres header{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;border-bottom:3px solid var(--red);padding-bottom:10px;margin-bottom:12px}
+.app-pres .pct{font-weight:800;font-size:1.3em;color:var(--ac);text-align:right;line-height:1.1}
+.app-pres .pct small{display:block;font-size:.55em;color:var(--mu);font-weight:400}
+.app-pres input,.app-pres select,.app-pres textarea,.app-pres button{font:inherit;font-size:16px;color:var(--tx);background:#0a0a0a;border:1px solid var(--bd);border-radius:14px;padding:10px 12px;min-height:48px;width:100%}
+.app-pres textarea{min-height:90px}
+.app-pres button{cursor:pointer;width:auto;background:var(--card);font-weight:600}
+.app-pres button.p{background:var(--red);border:0;color:#fff}
+.app-pres button.d{color:var(--ac);border-color:var(--ac)}
+.app-pres label{display:block;font-size:.85em;color:var(--mu);margin:10px 0 4px}
+.app-pres .card{background:var(--card);border:1px solid var(--bd);border-radius:18px;padding:14px;margin-bottom:12px}
+.app-pres .br{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
+.app-pres .br>*{flex:1}
+.app-pres .br>div{min-width:150px}
+.app-pres .tabs{display:flex;gap:6px;overflow-x:auto;margin-bottom:12px}
+.app-pres .tabs button{flex:0 0 auto;border-radius:99px;padding:0 16px;color:var(--mu)}
+.app-pres .tabs .on{background:var(--red);color:#fff;border-color:var(--red)}
+.app-pres .row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid var(--bd)}
+.app-pres .row b{display:block}
+.app-pres .row.on b{color:var(--ok)}
+.app-pres .pb{min-width:120px;flex:0 0 auto}
+.app-pres .pb.on{background:var(--ok);border:0;color:#fff}
+.app-pres .nm{display:block;width:100%;text-align:left;margin-bottom:8px;min-height:54px;font-size:1.05em}
+.app-pres #qr img{max-width:100%;height:auto}
+.app-pres #qr{display:grid;place-items:center;background:#fff;border-radius:18px;padding:16px;margin:12px auto;width:max-content;max-width:100%}
+.app-pres .big{font-size:1.1em;padding:16px;min-height:60px;width:100%}
+.app-pres pre{white-space:pre-wrap;word-break:break-word;background:#0a0a0a;border-radius:14px;padding:12px;font:14px/1.55 ui-monospace,monospace;margin:0 0 10px}
+.app-pres .warn{border:1px solid var(--ac);border-radius:14px;padding:10px 12px;color:var(--ac);margin:8px 0;font-size:.9em}
+@media print{.app-pres>.abd{background:#fff;color:#000}
+.app-pres .noprint,.app-pres header,.app-pres .tabs{display:none!important}
+.app-pres #qr{border:0}}
+
+/* ===== APPLICATION : Compte rendu de culte ===== */
+.app-cr{--bg:#0b2a2b;--card:#123f40;--tx:#fff7e8;--mu:#a9cfc8;--ac:#F4B942;--bd:#2a6a68;--on:#1a1203;color-scheme:dark;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.app-cr *{box-sizing:border-box}
+.app-cr,.app-cr>.abd{background:var(--bg)}
+.app-cr>.abd{margin:0 auto;max-width:760px;color:var(--tx);font:16px/1.45 system-ui,sans-serif;padding:0 14px 60px}
+.app-cr header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:linear-gradient(135deg,#0b2a2b,#17504f);border-bottom:3px solid var(--ac);margin:0 -14px 14px;padding:12px 14px;display:flex;gap:10px;align-items:center}
+.app-cr .logo{width:42px;height:42px;border-radius:50%;background:var(--ac);color:var(--on);display:grid;place-items:center;font-weight:800;font-size:.8em;flex:none}
+.app-cr h1{font-size:1.1em;margin:0}
+.app-cr small,.app-cr .mu{color:var(--mu)}
+.app-cr .tabs{display:flex;gap:8px;margin-bottom:12px}
+.app-cr .tabs button{flex:1}
+.app-cr .tabs .on{background:var(--ac);color:var(--on);border:0;font-weight:600}
+.app-cr input,.app-cr select,.app-cr textarea,.app-cr button{font:inherit;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:10px;width:100%;min-height:44px}
+.app-cr textarea{min-height:70px}
+.app-cr button{cursor:pointer;width:auto}
+.app-cr .card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px;margin-bottom:12px}
+.app-cr .card h2{font-size:1.05em;margin:0 0 8px;color:var(--ac)}
+.app-cr label{display:block;font-size:.85em;color:var(--mu);margin:8px 0 3px}
+.app-cr .g{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.app-cr .it{border:1px dashed var(--bd);border-radius:10px;padding:8px;margin-top:8px}
+.app-cr .it select,.app-cr .it input,.app-cr .it textarea{background:#0b2a2b}
+.app-cr .pri{background:var(--ac);color:var(--on);border:0;font-weight:600;width:100%}
+.app-cr .add{margin-top:8px;border-style:dashed;width:100%}
+.app-cr .act{display:flex;gap:8px;flex-wrap:wrap}
+.app-cr .act button{flex:1}
+.app-cr pre{white-space:pre-wrap;word-break:break-word;background:#0b2a2b;border-radius:10px;padding:10px;font:14px/1.5 ui-monospace,monospace}
+@media (max-width:420px){.app-cr .g{grid-template-columns:1fr}}
+@media print{.app-cr,.app-cr>.abd{background:#fff;color:#000}
+.app-cr header,.app-cr .tabs,.app-cr .act,.app-cr #v1>.card:not(#ob),.app-cr #secs,.app-cr #gen{display:none}
+.app-cr pre{background:#fff;color:#000}}
+
+/* ===== APPLICATION : Préparation du culte ===== */
+.app-prep{--bg:#0a0a0a;--card:#141414;--tx:#f5f5f5;--mu:#a8a8a8;--ac:#ff4655;--bd:#2a2a2a;--red:#d91e2e;color-scheme:dark}
+.app-prep *{box-sizing:border-box}
+.app-prep>.abd{margin:0;background:var(--bg);color:var(--tx);font:16px/1.45 system-ui,sans-serif}
+.app-prep .w{max-width:860px;margin:0 auto;padding:max(14px,env(safe-area-inset-top)) 14px 60px}
+.app-prep h1{font-size:1.4em;margin:0}
+.app-prep h2{font-size:1.05em;margin:0 0 8px;color:var(--ac)}
+.app-prep .mu{color:var(--mu);font-size:.9em}
+.app-prep header{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;margin-bottom:12px;border-bottom:3px solid var(--red);padding-bottom:10px}
+.app-prep .pct{font-weight:800;font-size:1.3em;color:var(--ac);text-align:right;line-height:1.1}
+.app-prep .pct small{display:block;font-size:.55em;color:var(--mu);font-weight:400}
+.app-prep input,.app-prep select,.app-prep textarea,.app-prep button{font:inherit;font-size:16px;color:var(--tx);background:#0a0a0a;border:1px solid var(--bd);border-radius:12px;padding:10px;min-height:46px;width:100%}
+.app-prep textarea{min-height:80px}
+.app-prep button{cursor:pointer;width:auto;background:var(--card)}
+.app-prep button.p{background:var(--red);border:0;font-weight:700;color:#fff}
+.app-prep button.d{color:var(--ac);border-color:var(--ac)}
+.app-prep input:focus,.app-prep select:focus,.app-prep textarea:focus{outline:2px solid var(--red)}
+.app-prep label{display:block;font-size:.85em;color:var(--mu);margin:10px 0 4px}
+.app-prep .card{background:var(--card);border:1px solid var(--bd);border-radius:18px;padding:14px;margin-bottom:12px}
+.app-prep .g{display:grid;grid-template-columns:1fr;gap:10px}
+@media(min-width:640px){.app-prep .g{grid-template-columns:1fr 1fr}
+.app-prep .w2{grid-column:1/-1}}
+.app-prep .br{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
+.app-prep .br>*{flex:1}
+.app-prep .br>div{min-width:150px}
+.app-prep .tabs{display:flex;gap:6px;overflow-x:auto;margin-bottom:12px;padding-bottom:2px}
+.app-prep .tabs button{flex:0 0 auto;border-radius:99px;padding:0 16px;color:var(--mu)}
+.app-prep .tabs .on{background:var(--red);color:#fff;border-color:var(--red);font-weight:700}
+.app-prep .rw{display:grid;gap:8px;background:#0a0a0a;border:1px solid var(--bd);border-radius:14px;padding:10px;margin-bottom:8px;grid-template-columns:1fr}
+@media(min-width:640px){.app-prep .rw.pr{grid-template-columns:64px 1.4fr 78px 1fr 1fr auto}
+.app-prep .rw.eq{grid-template-columns:1fr 1fr 1fr 130px auto}
+.app-prep .rw.ck{grid-template-columns:30px 2fr 1fr 150px auto}}
+.app-prep .tm{font-weight:800;color:var(--ac);align-self:center}
+.app-prep .mv{display:flex;gap:4px}
+.app-prep .mv button{min-height:42px;padding:0 12px}
+.app-prep .ckb{width:26px;height:26px;min-height:0;accent-color:var(--red);align-self:center}
+.app-prep .add{width:100%;border-style:dashed;margin-top:4px}
+.app-prep .tot{color:var(--mu);font-size:.9em;margin-top:6px}
+.app-prep .alert{border:1px solid var(--ac);border-radius:14px;padding:10px 12px;margin-bottom:10px;color:var(--ac)}
+.app-prep pre{white-space:pre-wrap;word-break:break-word;background:#0a0a0a;border-radius:14px;padding:12px;font:14px/1.55 ui-monospace,monospace;margin:0 0 10px}
+@media print{.app-prep>.abd{background:#fff;color:#000}
+.app-prep header,.app-prep .tabs,.app-prep #top,.app-prep .noprint{display:none!important}
+.app-prep pre{background:#fff;color:#000}}
+
+/* ===== APPLICATION : Programmation des départements ===== */
+.app-prog{--bg:#0a0a0a;--card:#141414;--tx:#f5f5f5;--mu:#a8a8a8;--ac:#ff4655;--bd:#2a2a2a;--red:#d91e2e;color-scheme:dark}
+.app-prog *{box-sizing:border-box}
+.app-prog>.abd{margin:0;background:var(--bg);color:var(--tx);font:16px/1.45 system-ui,sans-serif}
+.app-prog .w{max-width:860px;margin:0 auto;padding:max(14px,env(safe-area-inset-top)) 14px 60px}
+.app-prog h1{font-size:1.35em;margin:0}
+.app-prog h2{font-size:1.05em;margin:12px 0 6px;color:var(--ac)}
+.app-prog .mu{color:var(--mu);font-size:.9em}
+.app-prog header{border-bottom:3px solid var(--red);padding-bottom:10px;margin-bottom:12px}
+.app-prog input,.app-prog select,.app-prog textarea,.app-prog button{font:inherit;font-size:16px;line-height:1.2;color:var(--tx);background:#0a0a0a;border:1px solid var(--bd);border-radius:12px;padding:0 12px;height:48px;min-height:48px;width:100%;min-width:0;display:block;-webkit-appearance:none;appearance:none;margin:0}
+.app-prog textarea{height:96px;min-height:96px;padding:12px;resize:none}
+.app-prog input[type=date],.app-prog input[type=time]{text-align:left}
+.app-prog input[type=date]::-webkit-date-and-time-value,.app-prog input[type=time]::-webkit-date-and-time-value{text-align:left;margin:0;min-height:1.2em}
+.app-prog button{cursor:pointer;width:auto;background:var(--card);padding:0 16px;font-weight:600}
+.app-prog button.p{background:var(--red);border:0;color:#fff}
+.app-prog button.d{color:var(--ac);border-color:var(--ac)}
+.app-prog label{display:block;font-size:.85em;color:var(--mu);margin:10px 0 4px}
+.app-prog .card{background:var(--card);border:1px solid var(--bd);border-radius:18px;padding:14px;margin-bottom:12px}
+.app-prog .g{display:grid;gap:10px;grid-template-columns:minmax(0,1fr)}
+@media(min-width:600px){.app-prog .g{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.app-prog .g>div>label:first-child{margin-top:0}
+.app-prog .r{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 48px;gap:8px;margin-bottom:8px}
+.app-prog .r button{width:48px;padding:0}
+.app-prog .row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.app-prog .add{width:100%;border-style:dashed}
+.app-prog .hd{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
+.app-prog .hd b{font-size:1.05em}
+.app-prog .star{border:1px solid var(--red);border-radius:14px;padding:4px 10px 12px;margin-top:10px}
+.app-prog pre{white-space:pre-wrap;word-break:break-word;background:#0a0a0a;border-radius:14px;padding:12px;font:14px/1.5 ui-monospace,monospace;margin:8px 0}
+@media print{.app-prog>.abd{background:#fff;color:#000}
+.app-prog header,.app-prog #bar,.app-prog .noprint{display:none!important}
+.app-prog .card{border-color:#999;background:#fff}}
+</style>
+</head><body>
+
+
+<!-- ===== ÉCRAN DE VERROUILLAGE (avant la connexion de Gestion des membres et de Base de données CAM) ===== -->
+<div id="codescr" class="launch" hidden><div class="card box">
+ <div class="logo">CAM</div>
+ <h1>Ajouter un code d'accès</h1><p class="mu">Entrez le code d'accès d'une application pour la débloquer.</p>
+ <label>Code d'accès</label><input id="cd_in" autocomplete="off">
+ <p class="err" id="cd_e"></p>
+ <button class="pri" id="cd_go">Valider</button>
+ <button class="lnk" id="cd_bk" type="button">← Retour à l'accueil</button>
+</div></div>
+
+<!-- ===== ÉCRAN D'ENTRÉE : connexion, accueil, gestion des accès ===== -->
+<div class="launch">
+<div id="gate" class="wrap" hidden><div class="card box">
+ <div class="logo">CAM</div>
+ <h1 id="gt"></h1><p class="mu" id="gs"></p>
+ <div class="seg" id="seg"><button type="button" data-m="login">Connexion</button><button type="button" data-m="signup">Inscription</button></div>
+ <form id="af" autocomplete="off" novalidate>
+  <div data-s="signup"><label>Nom complet</label><input id="a_nom" autocomplete="name"></div>
+  <div data-s="login signup"><label>Adresse e-mail</label><input id="a_em" type="email" inputmode="email" autocomplete="username"></div>
+  <div data-s="login signup"><label id="lpw">Mot de passe</label><div class="pw"><input id="a_pw" type="password"><button id="sh" type="button" aria-label="Afficher">👁</button></div></div>
+  <div data-s="signup"><label>Confirmer le mot de passe</label><input id="a_pw2" type="password" autocomplete="new-password"></div>
+  <div data-s="signup"><label id="lcode">Code d'accès (facultatif)</label><input id="a_code" autocomplete="off" placeholder="Donné par l'administrateur"></div>
+  <p class="err" id="ge"></p><p class="mu" id="gm" style="color:#7ee2a8;margin:0"></p>
+  <button class="pri" id="go" type="submit"></button>
+ </form>
+ <button class="lnk" id="fg" type="button">Mot de passe oublié ?</button>
+ <button class="lnk" id="bk" type="button">← Retour à la connexion</button>
+</div></div>
+
+<div id="home" class="wrap" hidden>
+ <header><div class="logo">CAM</div><div style="flex:1"><h1>CAM appli</h1><div class="mu" id="hi"></div><div class="mu" id="syncst" style="font-size:.8em"></div></div><button id="lk">Déconnexion</button></header>
+ <div class="tiles" id="tiles"></div>
+</div>
+
+<div id="acct" class="wrap" hidden>
+ <header><button id="ab">← Accueil</button><h1>Mon compte</h1></header>
+ <div class="card"><h2 id="ac_nm"></h2><p class="mu" id="ac_em"></p><p class="mu" id="ac_ap"></p></div>
+ <div class="card"><h2>Changer mon mot de passe</h2>
+  <label>Mot de passe actuel</label><input id="ac_o" type="password" autocomplete="current-password">
+  <label>Nouveau mot de passe (8 caractères minimum)</label><input id="ac_n" type="password" autocomplete="new-password">
+  <label>Confirmer le nouveau mot de passe</label><input id="ac_n2" type="password" autocomplete="new-password">
+  <p class="err" id="ac_e"></p><p class="mu" id="ac_m" style="color:#7ee2a8"></p>
+  <button class="pri" id="ac_go">Changer le mot de passe</button></div>
+ <div class="card"><button id="ac_out" style="width:100%">Se déconnecter</button></div>
+</div>
+</div>
+
+<!-- ===== ZONE DES APPLICATIONS ===== -->
+<div id="view" hidden>
+<div id="bar" class="launch"><button id="vb">← Accueil</button><b id="vt"></b></div>
+<div id="apps">
+<!-- ===== APPLICATION : Gestion des membres ===== -->
+<div class="app app-membres" id="app-membres" hidden><div class="abd locked">
+<header class="bar"><div class="brand"><div class="logo">CAM</div><div><h1>Gestion des membres</h1><div class="sub">Groupe musical CAM · <span id="role">🔒</span></div></div></div><div class="fz"><button id="fm" aria-label="Réduire le texte">A−</button><button id="fpl" aria-label="Agrandir le texte">A+</button><button id="out" aria-label="Verrouiller" style="display:none">🔒</button></div></header>
+<main><div class="stats"><div class="stat"><b id="sT">0</b><small>Membres</small></div><div class="stat"><b id="sA">0</b><small>Actifs</small></div><div class="stat"><b id="sC">0</b><small>Cotisation payée</small></div></div>
+<div class="row"><input id="q" placeholder="Rechercher (nom, rôle…)"><select id="f" style="width:130px"><option value="">Tous</option><option>Actif</option><option>Inactif</option><option>Cotisation due</option></select></div>
+<div class="row"><button id="csv" style="flex:1">⬇ Exporter la liste (CSV)</button><button id="pdf" style="flex:1">⬇ Exporter la liste (PDF)</button></div><button class="pri" id="add" aria-label="Inscrire un membre">+</button>
+<div id="form" class="card">
+<div class="grid"><div><label>Prénom *</label><input id="fp"></div><div><label>Nom *</label><input id="fn"></div></div>
+<label>Rôle / instrument</label><input id="fr" placeholder="Chanteur, guitare, choriste…">
+<div class="grid"><div><label>Téléphone</label><input id="ft" type="tel"></div><div><label>Email</label><input id="fe" type="email"></div></div>
+<div class="grid"><div><label>Statut</label><select id="fs"><option>Actif</option><option>Inactif</option></select></div><div><label>Cotisation</label><select id="fc"><option value="0">Non payée</option><option value="1">Payée</option></select></div></div>
+<div class="grid"><div><label>Date d'adhésion</label><input id="fd" type="date"></div><div><label>Présences (répétitions)</label><input id="fpr" type="number" min="0" value="0"></div></div>
+<label>Notes</label><textarea id="fno" rows="2"></textarea>
+<h2 id="ft2" style="margin:0 0 4px;font-size:1.2em">Inscrire un membre</h2><div class="row" style="margin-top:10px"><button class="pri" id="save" style="flex:1">Enregistrer</button><button id="cancel">Annuler</button></div>
+</div>
+<div id="list"></div><div id="note"></div></main><div id="bd"></div>
+</div></div>
+
+<!-- ===== APPLICATION : Base de données CAM ===== -->
+<div class="app app-eglises" id="app-eglises" hidden><div class="abd locked">
+<main>
+<header>
+  <div><button id="eg">CAM</button><h1>Base de données CAM</h1></div><button id="lk" class="noprint">Déconnexion</button>
+</header>
+<nav class="tabs" role="tablist">
+  <button class="tab on" data-t="fiches">Fiches</button>
+  <button class="tab" data-t="stats">Tableau de bord</button>
+  <button class="tab" data-t="data">Données</button>
+</nav>
+<div id="banner"></div>
+
+<section id="v-fiches">
+  <div class="stats">
+    <button class="st" data-f="all"><b id="s1">0</b><span>Total</span></button>
+    <button class="st" data-f="Nouveau"><b id="s2">0</b><span>Nouveaux</span></button>
+    <button class="st hot" data-f="late"><b id="s3">0</b><span>À relancer</span></button>
+    <button class="st" data-f="Membre"><b id="s4">0</b><span>Membres</span></button>
+  </div>
+  <div id="bday"></div>
+  <div class="bar"><input id="q" type="search" placeholder="Rechercher un nom, un numéro, une note…" aria-label="Rechercher"></div>
+  <div class="bar">
+    <select id="sd" aria-label="Département"></select>
+    <select id="so" aria-label="Trier par">
+      <option value="nom">Tri : nom (A–Z)</option><option value="recent">Tri : plus récents</option>
+      <option value="relance">Tri : relance la plus proche</option><option value="anniv">Tri : prochain anniversaire</option>
+    </select>
+  </div>
+  <div class="chips" id="chips"></div>
+  <div class="sel-bar" id="selbar">
+    <b id="selcnt"></b>
+    <select id="selst" aria-label="Nouveau statut"><option value="">Changer le statut…</option><option>Membre</option><option>Nouveau</option><option>En suivi</option><option>Inactif</option></select>
+    <button data-b="resp">Responsable</button><button data-b="csv">Exporter</button><button class="d" data-b="del">Supprimer</button><button data-b="none">Annuler</button>
+  </div>
+  <div class="row noprint"><button data-b="all" class="fit">Tout sélectionner</button><span class="meta" id="cnt" style="align-self:center"></span></div>
+  <div id="list"></div>
+</section>
+
+<section id="v-stats" hidden></section>
+
+<section id="v-data" hidden>
+  <div class="panel col">
+    <h2>Sauvegarde et échange</h2>
+    <p class="meta" style="margin:0">Les fiches sont stockées dans cet appareil. Faites une sauvegarde régulière et gardez-la ailleurs (WhatsApp, e-mail, clé USB).</p>
+    <button class="p" id="bk">Sauvegarder (fichier chiffré .json)</button>
+    <button id="rs">Restaurer une sauvegarde (remplace tout)</button>
+    <button id="csv">Exporter la liste (Excel .csv)</button>
+    <button id="pdfx">Exporter la liste (PDF)</button>
+    <button id="imp">Importer un fichier (.csv ou .json, fusion sans doublons)</button>
+    <button id="prt">Imprimer / enregistrer en PDF</button>
+    <button id="bdics">Ajouter tous les anniversaires à l’agenda</button>
+    <button id="old" hidden>Récupérer mes anciennes fiches (ancien mot de passe)</button>
+    <input type="file" id="file" accept=".csv,.json" hidden>
+  </div>
+  <div class="panel"><h2>Doublons</h2><div id="dups"></div></div>
+  <div class="panel"><h2>Qualité des données</h2><div id="qual"></div></div>
+  <div class="panel col">
+    <h2>Réglages</h2>
+    <div><label>Indicatif pays par défaut (pour WhatsApp et appels)</label><input id="cc" inputmode="numeric" placeholder="225"></div>
+    <button class="d" id="wipe">Effacer toute la base</button>
+  </div>
+</section>
+</main>
+<button class="p" id="add">Nouvelle fiche</button>
+<div id="toast"><span id="tm"></span><button id="tu">Annuler</button></div>
+
+<dialog id="dlg"><form id="f">
+  <h2 id="ft">Nouvelle fiche</h2>
+  <div class="g">
+    <div><label>Nom *</label><input id="nom" required></div>
+    <div><label>Prénoms *</label><input id="prenoms" required></div>
+    <div><label>Contact</label><input id="tel" type="tel" inputmode="tel"></div>
+    <div><label>Date de naissance</label><input id="naiss" type="date"></div>
+    <div><label>Lieu de résidence</label><input id="lieu"></div>
+    <div><label>Département</label><input id="dep" list="deps"><datalist id="deps"></datalist></div>
+    <div><label>Profession</label><input id="prof"></div>
+    <div><label>Contact d’urgence</label><input id="urg" placeholder="Nom et téléphone"></div>
+    <div><label>Date d’arrivée à l’église</label><input id="visite" type="date"></div>
+    <div><label>Provenance</label><select id="src"><option value="">Non précisé</option><option>Invité par un membre</option><option>Réseaux sociaux</option><option>Passage / curiosité</option><option>Événement</option><option>Autre</option></select></div>
+    <div><label>Responsable du suivi</label><input id="resp" list="resps" placeholder="Qui s’en occupe ?"><datalist id="resps"></datalist></div>
+    <div><label>Statut</label><select id="statut"><option>Membre</option><option>Nouveau</option><option>En suivi</option><option>Inactif</option></select></div>
+    <div class="w"><label>Prochaine relance</label><input id="relance" type="date"></div>
+    <div class="w"><label>Notes (besoins, prière, remarques)</label><textarea id="notes"></textarea></div>
+  </div>
+  <div class="act"><button type="button" id="cancel">Annuler</button><button class="p" type="submit">Enregistrer</button></div>
+</form></dialog>
+
+<dialog id="jd"><div>
+  <h2 id="jt">Journal de suivi</h2>
+  <div class="col">
+    <select id="jty" aria-label="Type"><option>Appel</option><option>Visite</option><option>Message</option><option>Prière</option><option>Autre</option></select>
+    <textarea id="jx" placeholder="Ce qui a été dit ou fait…"></textarea>
+    <button class="p" id="ja">Ajouter au journal</button>
+  </div>
+  <div id="jl" style="margin-top:12px"></div>
+  <div class="act"><button id="jc">Fermer</button></div>
+</div></dialog>
+</div></div>
+
+<!-- ===== APPLICATION : Présence ===== -->
+<div class="app app-pres" id="app-pres" hidden><div class="abd">
+<div class="w" id="adm" hidden>
+<header><div><div class="mu">CAM</div><h1>Présence</h1></div><div class="pct" id="pct"></div></header>
+<div class="card"><div class="br"><div style="flex:1 1 100%"><label>Service</label><select id="sv"></select></div><button id="nw" class="p">+ Nouveau</button><button id="del" class="d">Supprimer</button></div>
+<div class="br"><div><label>Titre</label><input id="ti"></div><div><label>Date</label><input id="dt" type="date"></div><div><label>Heure</label><input id="hr" type="time"></div></div></div>
+<nav class="tabs" id="tabs"><button data-t="ap" class="on">Appel</button><button data-t="qr">QR et accueil</button><button data-t="rs">Résumé</button></nav>
+
+<section id="v-ap" class="card"><div class="br"><input id="q" placeholder="Rechercher un nom…" style="flex:2"><select id="fl"><option value="">Tous</option><option value="p">Présents</option><option value="a">Absents</option></select></div>
+<div id="ls"></div><button id="gu" style="width:100%;border-style:dashed;margin-top:8px">+ Ajouter un invité</button></section>
+
+<section id="v-qr" class="card" hidden><h2>QR de présence</h2>
+<p class="mu">Le QR ouvre cette application en ligne : chaque personne scanne, cherche son nom et valide, la présence est enregistrée sur le serveur.</p>
+<div class="br" style="margin-top:10px"><button id="gq" class="p">Générer le QR</button><button id="kb">Mode accueil</button></div>
+<div id="qw" hidden><div id="qr"></div><p class="mu" id="lkt"></p><div class="br noprint"><button id="cl">Copier le lien</button><button id="pq">Imprimer</button></div></div>
+</section>
+
+<section id="v-rs" class="card" hidden><h2>Résumé</h2><pre id="out"></pre><div class="br noprint"><button id="cp">Copier</button><button id="wp" class="p">WhatsApp</button><button id="pdf">Télécharger PDF</button><button id="csv">Télécharger CSV</button></div></section>
+</div>
+
+<div class="w" id="pub" hidden>
+<header><div><div class="mu">CAM – Présence</div><h1 id="pt"></h1><div class="mu" id="pdt"></div></div></header>
+<div id="p1"><input id="ps" placeholder="Cherchez votre nom…" style="margin-bottom:10px"><div id="pl"></div><p class="mu" id="pn"></p></div>
+<div id="p2" hidden class="card"><h2 id="pq2"></h2><button class="p big" id="pyes">✅ Présent</button><button id="pno" style="width:100%;margin-top:8px">← Ce n'est pas moi</button></div>
+<div id="p3" hidden class="card" style="text-align:center"><div style="font-size:3rem">✅</div><h2 id="pdn"></h2><p class="mu" id="pms"></p><div id="pact"></div></div>
+<button id="pex" hidden style="margin-top:14px;width:100%">Quitter le mode accueil</button>
+</div>
+</div></div>
+
+<!-- ===== APPLICATION : Compte rendu de culte ===== -->
+<div class="app app-cr" id="app-cr" hidden><div class="abd">
+<header><div class="logo">CAM</div><div><h1>Compte rendu de culte</h1><small>Départements CAM</small></div></header>
+<div class="tabs"><button id="t1" class="on">Nouveau</button><button id="t2">Historique</button></div>
+
+<div id="v1">
+<div class="card"><h2>1. Informations</h2>
+<div class="g">
+<div><label>Département</label><select id="dep"></select></div>
+<div><label>Responsable</label><input id="resp"></div>
+<div><label>Date</label><input id="date" type="date"></div>
+<div><label>Type de culte</label><select id="typ"><option>Culte du dimanche</option><option>Culte de semaine</option><option>Veillée / Vigile</option><option>Culte spécial</option></select></div>
+<div><label>Effectif prévu</label><input id="prev" type="number" min="0"></div>
+<div><label>Effectif présent</label><input id="pres" type="number" min="0"></div>
+</div>
+<label>Ponctualité de l'équipe</label>
+<select id="pon"><option>Toute l'équipe à l'heure</option><option>Quelques retards</option><option>Retards importants</option></select>
+</div>
+
+<div id="secs"></div>
+
+<div class="card"><h2>6. Bilan du service</h2>
+<label>Points positifs</label><textarea id="pos"></textarea>
+<label>Difficultés rencontrées</label><textarea id="dif"></textarea>
+<label>Besoins / demandes à la direction</label><textarea id="bes"></textarea>
+<label>Décisions / suite à donner</label><textarea id="dec"></textarea>
+</div>
+<button class="pri" id="gen">Générer le compte rendu</button>
+
+<div id="ob" hidden style="margin-top:14px"><div class="card"><h2>Compte rendu prêt</h2><pre id="out"></pre>
+<div class="act"><button id="cp">Copier</button><button id="wa">WhatsApp</button><button id="pdf">Télécharger PDF</button><button id="csv">Télécharger CSV</button><button id="sv" class="pri" style="width:auto">Enregistrer</button></div></div></div>
+</div>
+
+<div id="v2" hidden><div class="act" style="margin-bottom:10px"><button id="csvall">Tout exporter (CSV)</button></div><div id="hl"></div></div>
+</div></div>
+
+<!-- ===== APPLICATION : Préparation du culte ===== -->
+<div class="app app-prep" id="app-prep" hidden><div class="abd">
+<div class="w">
+<header><div><div class="mu">CAM</div><h1>Préparation du culte</h1></div><div class="pct" id="pct"></div></header>
+
+<div class="card" id="top"><div class="br"><div style="flex:1 1 100%"><label>Culte</label><select id="sel"></select></div>
+<button id="nw" class="p">+ Nouveau</button><button id="dup">Dupliquer</button><button id="del" class="d">Supprimer</button></div></div>
+
+<nav class="tabs" id="tabs"><button data-t="inf" class="on">Infos</button><button data-t="prog">Programme</button><button data-t="eq">Équipes</button><button data-t="chk">Checklist</button><button data-t="res">Résumé</button></nav>
+
+<section id="v-inf" class="card"><h2>Informations du culte</h2><div class="g">
+<div><label>Date</label><input type="date" data-f="date"></div>
+<div><label>Heure de début</label><input type="time" data-f="heure"></div>
+<div><label>Type de culte</label><select data-f="type"><option>Culte du dimanche</option><option>Culte de semaine</option><option>Veillée / Vigile</option><option>Culte spécial</option><option>Mariage / Cérémonie</option></select></div>
+<div><label>Thème</label><input data-f="theme" placeholder="Ex : La foi qui agit"></div>
+<div><label>Prédicateur</label><input data-f="pred"></div>
+<div><label>Texte biblique</label><input data-f="texte" placeholder="Ex : Jacques 2:14-26"></div>
+<div class="w2"><label>Chants / liste de louange</label><textarea data-f="chants" placeholder="Un chant par ligne"></textarea></div>
+<div class="w2"><label>Annonces à faire</label><textarea data-f="ann" placeholder="Une annonce par ligne"></textarea></div></div></section>
+
+<section id="v-prog" class="card" hidden><h2>Ordre du culte</h2><div id="lp"></div>
+<button class="add" data-add="prog">+ Ajouter un moment</button><div class="tot" id="tp"></div></section>
+
+<section id="v-eq" class="card" hidden><h2>Équipes et responsables</h2><div id="le"></div>
+<button class="add" data-add="eq">+ Ajouter une personne</button><div class="tot" id="te"></div></section>
+
+<section id="v-chk" class="card" hidden><h2>Checklist de préparation</h2><div id="lc"></div>
+<button class="add" data-add="chk">+ Ajouter une tâche</button></section>
+
+<section id="v-res" hidden><div id="al"></div><div class="card"><h2>Résumé à partager</h2><pre id="out"></pre>
+<div class="br noprint"><button id="cp">Copier</button><button id="wa" class="p">WhatsApp</button><button id="pdf">Télécharger PDF</button><button id="csv">Télécharger CSV</button></div></div></section>
+
+<datalist id="dl-e"></datalist><datalist id="dl-d"></datalist>
+</div>
+</div></div>
+
+<!-- ===== APPLICATION : Programmation des départements ===== -->
+<div class="app app-prog" id="app-prog" hidden><div class="abd">
+<div class="w">
+<header><div class="mu">CAM</div><h1>Programmation des départements</h1></header>
+<div class="card" id="bar"><div class="g">
+<div><label>Département</label><select id="dep"></select></div>
+<div><label>Date du service</label><input type="date" id="dt"></div></div>
+<button class="p add" id="nw" style="margin-top:10px;border-style:solid">+ Nouvelle programmation</button></div>
+<div id="L"></div>
+<datalist id="names"></datalist>
+</div>
+</div></div>
+</div>
+</div>
+
+<!-- ===== PAGE DE CONNEXION COMMUNE (copiée dans chaque application protégée) ===== -->
+
+<script>
+(function(){
+/* ===== 0. CONNEXION AU SERVEUR : l'application fonctionne uniquement en ligne, rien n'est gardé sur l'appareil ===== */
+const CamStore=(function(){
+ const SYNC=/^(cam_members|cam_db_v1|cam_cr|cam_resp|cam_prep_v1|cam_prog_v1|cam_pres_v1|eglise-nouveaux-v1)$/;
+ const OLD=['cam_appli_v2','cam_members','cam_db_v1','cam_cr','cam_resp','cam_prep_v1','cam_prog_v1','cam_pres_v1','eglise-nouveaux-v1'];
+ const AK={membres:['cam_members'],eglises:['cam_db_v1','eglise-nouveaux-v1'],cr:['cam_cr','cam_resp'],prep:['cam_prep_v1'],prog:['cam_prog_v1'],pres:['cam_pres_v1']};
+ const ls=window.localStorage,ss=window.sessionStorage,P=Storage.prototype,gi=P.getItem,si=P.setItem,ri=P.removeItem;
+ let cache={},ver=0,token='',user=null,pub={inscriptions:true,codeRequis:false},pend={},timer=0,poll=0,tele={n:0,sum:0,max:0,fail:0},teleAt=0;
+ const H=()=>({'Authorization':'Bearer '+token,'Content-Type':'application/json'});
+ const status=t=>{const el=document.getElementById('syncst');if(el)el.textContent=t};
+ const writable=k=>!!user&&user.apps.some(a=>(AK[a]||[]).includes(k));
+ /* Les données des applications ne sont jamais écrites dans le stockage de l'appareil : elles restent en mémoire et sur le serveur */
+ P.getItem=function(k){return this===ls&&SYNC.test(k)?(k in cache?cache[k]:null):gi.call(this,k)};
+ P.setItem=function(k,v){if(this===ls&&SYNC.test(k)){v=String(v);cache[k]=v;queue(k,0);return}return si.call(this,k,v)};
+ P.removeItem=function(k){if(this===ls&&SYNC.test(k)){delete cache[k];queue(k,1);return}return ri.call(this,k)};
+ function queue(k,del){if(!writable(k))return;pend[k]=del?2:1;clearTimeout(timer);timer=setTimeout(flush,250)}
+ function rec(ms,fail){tele.n++;tele.sum+=ms;if(ms>tele.max)tele.max=ms;if(fail)tele.fail++}
+ async function sendTele(){if(!tele.n||Date.now()-teleAt<60000)return;teleAt=Date.now();const b={n:tele.n,avg:tele.sum/tele.n,max:tele.max,fail:tele.fail};tele={n:0,sum:0,max:0,fail:0};try{await fetch('/api/telemetry',{method:'POST',headers:H(),body:JSON.stringify(b)})}catch(e){}}
+ function expired(){token='';try{ss.removeItem('cam_tok')}catch(e){}location.reload()}
+ async function flush(){
+  for(const k of Object.keys(pend)){const op=pend[k],t0=performance.now();
+   try{const r=await fetch('/api/state/'+k,op===2?{method:'DELETE',headers:H()}:{method:'PUT',headers:H(),body:JSON.stringify({value:cache[k]})});rec(performance.now()-t0,r.status>=500);
+    if(r.status===401)return expired();if(r.status===403){delete pend[k];continue}if(!r.ok)throw 0;const j=await r.json();ver=Math.max(ver,j.ver||0);if(pend[k]===op)delete pend[k]}
+   catch(e){rec(performance.now()-t0,true);status('Connexion perdue : vos modifications seront envoyées dès que possible');return}}
+  status('Serveur : connecté')}
+ addEventListener('beforeunload',e=>{if(Object.keys(pend).length){e.preventDefault();e.returnValue=''}});
+ function adopt(j){
+  cache={};for(const k in j.data)if(SYNC.test(k))cache[k]=j.data[k];
+  ver=j.ver||0;
+  if(ver>0)for(const k of OLD){try{ri.call(ls,k)}catch(e){}} /* efface les anciennes données qui étaient gardées sur l'appareil */
+  status('Serveur : connecté');startPoll()}
+ function startPoll(){clearInterval(poll);poll=setInterval(async()=>{
+  if(document.hidden)return;
+  const t0=performance.now();
+  try{if(Object.keys(pend).length)return flush();
+   const r=await fetch('/api/changes?since='+ver,{headers:H(),cache:'no-store'});rec(performance.now()-t0,r.status>=500);
+   if(r.status===401)return expired();if(!r.ok)return;
+   const j=await r.json(),ch=[];
+   for(const k in j.data)if(SYNC.test(k)){cache[k]=j.data[k];ch.push(k)}
+   for(const k of j.deleted||[]){delete cache[k];ch.push(k)}
+   ver=Math.max(ver,j.ver||0);status('Serveur : connecté');
+   if(ch.length)window.dispatchEvent(new CustomEvent('cam-sync',{detail:ch}));
+   sendTele()}
+  catch(e){rec(performance.now()-t0,true);status('Connexion perdue : nouvelle tentative…')}},5000)}
+ function blocked(){document.body.innerHTML='<div style="font:16px system-ui,sans-serif;color:#f5f5f5;background:#0a0a0a;min-height:100vh;display:grid;place-items:center;padding:24px;text-align:center"><div><h2>Serveur injoignable</h2><p>CAM appli doit se connecter au serveur. Vérifiez votre connexion internet puis réessayez.</p><button onclick="location.reload()" style="font:inherit;padding:12px 22px;border-radius:12px;border:0;background:#d91e2e;color:#fff;font-weight:700">Réessayer</button></div></div>';return new Promise(()=>{})}
+ async function call(path,body){
+  const r=await fetch(path,{method:'POST',headers:token?H():{'Content-Type':'application/json'},body:JSON.stringify(body||{})});
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok){const e=new Error(j.error||'Erreur. Réessayez.');e.status=r.status;e.data=j;throw e}
+  return j}
+ function session(t){token=t;try{ss.setItem('cam_tok',t)}catch(e){}}
+ async function init(){
+  if(location.hash.startsWith('#checkin='))return;
+  let ping;try{const r=await fetch('/api/ping',{cache:'no-store'});if(!r.ok||!/json/.test(r.headers.get('content-type')||''))return blocked();ping=await r.json()}catch(e){return blocked()}
+  if(!ping||!ping.cam)return blocked();
+  try{const r=await fetch('/api/config',{cache:'no-store'});if(r.ok)pub=await r.json()}catch(e){}
+  token=ss.getItem('cam_tok')||'';
+  if(!token)return;
+  try{
+   const r=await fetch('/api/me',{headers:H(),cache:'no-store'});
+   if(r.status===401){token='';try{ss.removeItem('cam_tok')}catch(e){}return}
+   if(!r.ok)return blocked();
+   user=(await r.json()).user;
+   const s=await fetch('/api/state',{headers:H(),cache:'no-store'});
+   if(!s.ok){if(s.status===401){token='';user=null;try{ss.removeItem('cam_tok')}catch(e){}return}return blocked()}
+   adopt(await s.json())
+  }catch(e){return blocked()}}
+ return{init,status,
+  login:async(email,password)=>{const j=await call('/api/login',{email,password});session(j.token);return j},
+  register:async b=>{const j=await call('/api/register',b);if(j.token)session(j.token);return j},
+  addCode:async code=>{const j=await call('/api/me/code',{code});user=j.user;return j},
+  changePassword:async(old,pw)=>{const j=await call('/api/me/password',{old,password:pw});session(j.token);return j},
+  logout:async()=>{try{if(token)await fetch('/api/logout',{method:'POST',headers:H(),keepalive:true})}catch(e){}token='';user=null;cache={};pend={};try{ss.removeItem('cam_tok')}catch(e){}location.reload()},
+  get user(){return user},get cfg(){return pub}}
+})();
+
+function boot(){
+/* ===== 1. OUTILS COMMUNS : exports PDF et CSV ===== */
+function camDL(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500)}
+function camSlug(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'-').replace(/^-|-$/g,'').toLowerCase()}
+function camCSV(rows,name){const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';camDL(new Blob(['\ufeff'+rows.map(r=>r.map(q).join(';')).join('\r\n')],{type:'text/csv;charset=utf-8'}),name)}
+function camPDF(title,items,name){
+ const W={'€':128,'…':133,'‘':145,'’':146,'“':147,'”':148,'•':149,'–':150,'—':151,'™':153,'œ':156,'Œ':140};
+ const cp=s=>{let o='';for(const ch of String(s??'')){const c=ch.codePointAt(0);if(c===9)o+=' ';else if(c<32)continue;else if(c<127||(c>=160&&c<256))o+=String.fromCharCode(c);else if(W[ch])o+=String.fromCharCode(W[ch]);else if(c===0x202F||c===0x2009)o+=' '}return o};
+ const cv=document.createElement('canvas').getContext('2d'),MX=50,MW=495,PH=842,pg=[[]];let y=PH-60;
+ const add=(t,b,sz)=>{cv.font=(b?'bold ':'')+sz+'px Helvetica,Arial,sans-serif';const out=[];let cu='';
+  for(const w of cp(t).split(' ')){const x=cu?cu+' '+w:w;if(cv.measureText(x).width>MW&&cu){out.push(cu);cu=w}else cu=x}out.push(cu);
+  for(const l of out){if(y<60){pg.push([]);y=PH-60}pg[pg.length-1].push([l,b,sz,y]);y-=sz*1.45}};
+ add(title,true,18);y-=8;
+ for(const it of items){if(it&&it.gap){y-=it.gap;continue}const o=typeof it==='string'?{t:it}:it;
+  for(const ln of String(o.t).split('\n')){const c=cp(ln),bold=o.b||(typeof it==='string'&&/[A-Z]{3}/.test(c)&&c===c.toUpperCase());add(ln,!!bold,o.s||11)}}
+ const esc=s=>s.replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)'),ob=[],N=pg.length;
+ ob[1]='<</Type/Catalog/Pages 2 0 R>>';
+ ob[2]='<</Type/Pages/Kids['+pg.map((_,i)=>(5+2*i)+' 0 R').join(' ')+']/Count '+N+'>>';
+ ob[3]='<</Type/Font/Subtype/Type1/BaseFont/Helvetica/Encoding/WinAnsiEncoding>>';
+ ob[4]='<</Type/Font/Subtype/Type1/BaseFont/Helvetica-Bold/Encoding/WinAnsiEncoding>>';
+ pg.forEach((p,i)=>{const st=p.map(([l,b,sz,yy])=>'BT /F'+(b?2:1)+' '+sz+' Tf 1 0 0 1 '+MX+' '+yy.toFixed(1)+' Tm ('+esc(l)+') Tj ET').join('\n')+'\nBT /F1 8 Tf 1 0 0 1 '+MX+' 28 Tm (CAM - page '+(i+1)+'/'+N+') Tj ET';
+  ob[5+2*i]='<</Type/Page/Parent 2 0 R/MediaBox[0 0 595 842]/Resources<</Font<</F1 3 0 R/F2 4 0 R>>>>/Contents '+(6+2*i)+' 0 R>>';
+  ob[6+2*i]='<</Length '+st.length+'>>\nstream\n'+st+'\nendstream'});
+ let o='%PDF-1.4\n';const off=[];
+ for(let n=1;n<ob.length;n++){off[n]=o.length;o+=n+' 0 obj\n'+ob[n]+'\nendobj\n'}
+ const xr=o.length;o+='xref\n0 '+ob.length+'\n0000000000 65535 f \n'+off.slice(1).map(v=>String(v).padStart(10,'0')+' 00000 n \n').join('')+'trailer\n<</Size '+ob.length+'/Root 1 0 R>>\nstartxref\n'+xr+'\n%%EOF';
+ const u=new Uint8Array(o.length);for(let i=0;i<o.length;i++)u[i]=o.charCodeAt(i)&255;
+ camDL(new Blob([u],{type:'application/pdf'}),name)}
+
+/* ===== 2. ACCÈS AUX APPLICATIONS : la connexion se fait sur l'écran d'entrée, le serveur contrôle les droits ===== */
+function camAuth(document,window,A,N,SSO){
+try{if(/#checkin=/.test(window.top.location.hash||''))return}catch(e){if(/#checkin=/.test(location.hash))return}
+window.camLock=()=>CamStore.logout();
+window.camOpen=()=>{const u=CamStore.user;if(u&&u.apps.includes(A)){if(window.onCamUnlock)window.onCamUnlock(u)}else CamStore.logout()};
+}
+
+/* ===== 3. ISOLATION DES APPLICATIONS (chaque application garde ses propres éléments) ===== */
+const CTRL={};
+function scopedDoc(root){const bd=root.firstElementChild;return{getElementById:i=>root.querySelector('#'+i),querySelector:s=>root.querySelector(s),querySelectorAll:s=>root.querySelectorAll(s),createElement:t=>document.createElement(t),addEventListener:(t,f,o)=>root.addEventListener(t,f,o),body:bd,documentElement:root,get hidden(){return document.hidden}}}
+function scopedWin(store){return new Proxy(store,{get(s,k){if(k in s)return s[k];const v=window[k];return typeof v==='function'&&!/^[A-Z]/.test(String(k))?v.bind(window):v},set(s,k,v){s[k]=v;return true},has(){return true}})}
+function mount(id,fn,auth){const root=document.getElementById('app-'+id);
+  const st={};CTRL[id]=st;const d=scopedDoc(root),w=scopedWin(st);
+ fn(d,w);if(auth)camAuth(d,w,id,auth.N,auth.SSO)}
+
+/* ===== APPLICATION : Gestion des membres ===== */
+mount('membres',function(document,window){
+let members=[],editId=null,isAdmin=true,unlocked=false,T=null;const $=i=>document.getElementById(i);
+const IDLE=5*60*1000;
+const saveM=()=>localStorage.setItem('cam_members',JSON.stringify(members));
+const loadM=()=>{try{return JSON.parse(localStorage.getItem('cam_members')||'[]')}catch(e){return[]}};
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function render(){
+ const q=$('q').value.toLowerCase(),f=$('f').value;
+ const L=members.filter(m=>(!q||[m.prenom,m.nom,m.role,m.email,m.tel].join(' ').toLowerCase().includes(q))&&(!f||(f==='Cotisation due'?!m.cotis:m.statut===f)))
+  .sort((a,b)=>(a.nom||'').localeCompare(b.nom||''));
+ $('sT').textContent=members.length;$('sA').textContent=members.filter(m=>m.statut==='Actif').length;$('sC').textContent=members.filter(m=>m.cotis).length;
+ $('list').innerHTML=L.length?L.map(m=>`<div class="card"><div class="hd"><div class="av">${esc((m.prenom||'?')[0]+(m.nom||'')[0]).toUpperCase()}</div><div style="min-width:0"><h3>${esc(m.prenom)} ${esc(m.nom)}</h3><div class="meta">${esc(m.role||'—')}${m.tel?' · '+esc(m.tel):''}${m.email?' · '+esc(m.email):''}</div></div></div>
+ <span class="tag ${m.statut==='Actif'?'ok':'ko'}">${esc(m.statut)}</span><span class="tag ${m.cotis?'ok':'ko'}">Cotisation ${m.cotis?'payée':'due'}</span><span class="tag">${m.presences||0} présences</span>${m.date?`<span class="tag">Depuis ${esc(m.date)}</span>`:''}
+ ${m.notes?`<div class="meta" style="margin-top:6px">${esc(m.notes)}</div>`:''}
+ ${isAdmin?`<div class="act"><button data-p="${m.id}">+1 présence</button><button data-e="${m.id}">Modifier</button><button data-d="${m.id}">Supprimer</button></div>`:''}</div>`).join(''):'<div class="meta" style="text-align:center;padding:20px">Aucun membre pour le moment.</div>';
+}
+function openForm(m){editId=m?m.id:null;m=m||{};
+ $('fp').value=m.prenom||'';$('fn').value=m.nom||'';$('fr').value=m.role||'';$('ft').value=m.tel||'';$('fe').value=m.email||'';
+ $('fs').value=m.statut||'Actif';$('fc').value=m.cotis?'1':'0';$('fd').value=m.date||new Date().toISOString().slice(0,10);$('fpr').value=m.presences||0;$('fno').value=m.notes||'';
+ $('ft2').textContent=m.id?'Modifier le membre':'Inscrire un membre';$('form').style.display='block';$('bd').style.display='block'}
+function persist(m){
+ if(!unlocked)return;
+ const i=members.findIndex(x=>x.id===m.id);i<0?members.push(m):members[i]=m;saveM();render()}
+$('add').onclick=()=>openForm();const closeF=()=>{$('form').style.display='none';$('bd').style.display='none'};$('cancel').onclick=closeF;$('bd').onclick=closeF;
+$('save').onclick=()=>{
+ if(!$('fp').value.trim()||!$('fn').value.trim())return alert('Prénom et nom requis.');
+ persist({id:editId||'m'+Date.now().toString(36),prenom:$('fp').value.trim(),nom:$('fn').value.trim(),role:$('fr').value.trim(),tel:$('ft').value.trim(),email:$('fe').value.trim(),statut:$('fs').value,cotis:$('fc').value==='1',date:$('fd').value,presences:+$('fpr').value||0,notes:$('fno').value.trim()});
+ closeF()};
+$('list').onclick=e=>{if(!unlocked)return;const t=e.target,id=t.dataset.e||t.dataset.d||t.dataset.p;if(!id)return;const m=members.find(x=>x.id===id);if(!m)return;
+ if(t.dataset.e)openForm(m);
+ if(t.dataset.p)persist({...m,presences:(m.presences||0)+1});
+ if(t.dataset.d&&confirm('Supprimer '+m.prenom+' '+m.nom+' ?')){members=members.filter(x=>x.id!==id);saveM();render()}};
+let FS=100;try{FS=+localStorage.getItem('camfs')||100}catch(e){}
+function setFS(v){FS=Math.max(80,Math.min(150,v));document.documentElement.style.setProperty('--fs',FS);try{localStorage.setItem('camfs',FS)}catch(e){}}
+setFS(FS);$('fm').onclick=()=>setFS(FS-10);$('fpl').onclick=()=>setFS(FS+10);
+$('q').oninput=render;$('f').onchange=render;
+$('csv').onclick=()=>{
+ if(!unlocked)return;
+ const h=['prenom','nom','role','tel','email','statut','cotis','date','presences','notes'];
+ const data=[h.join(';'),...members.map(m=>h.map(k=>'"'+String(m[k]??'').replace(/"/g,'""')+'"').join(';'))].join('\n');
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+data],{type:'text/csv;charset=utf-8'}));a.download='cam-membres.csv';a.click();URL.revokeObjectURL(a.href)};
+
+$('pdf').onclick=()=>{if(!unlocked)return;const L=members.slice().sort((a,b)=>(a.nom||'').localeCompare(b.nom||''));camPDF('Gestion des membres – CAM',['Liste au '+new Date().toLocaleDateString('fr-FR')+' : '+L.length+' membre(s)',{gap:6},...L.map(m=>({t:(m.nom||'')+' '+(m.prenom||'')+' – '+(m.role||'—')+' – '+(m.tel||'—')+' – '+m.statut+' – cotisation '+(m.cotis?'payée':'due')+' – '+(m.presences||0)+' présence(s)'}))],'cam-membres.pdf')};
+window.onCamUnlock=u=>{unlocked=true;members=loadM();document.body.classList.remove('locked');$('out').style.display='';$('role').textContent=u.nom;render()};
+window.onCamLock=()=>{unlocked=false;members=[];editId=null;closeF();$('q').value='';render();document.body.classList.add('locked');$('out').style.display='none';$('role').textContent='🔒'};
+$('out').onclick=()=>window.camLock();
+render();
+
+},{N:"Gestion des membres",SSO:false});
+
+/* ===== APPLICATION : Base de données CAM ===== */
+mount('eglises',function(document,window){
+const KEY="cam_db_v1",OLDKEY="eglise-nouveaux-v1",ST={Nouveau:"#ffc247","En suivi":"#ff5a1f",Membre:"#ff8a00",Inactif:"#7a7a7a"},MG={"Contacté":"En suivi",Revenu:"En suivi","Intégré":"Membre"};
+const F=["nom","prenoms","naiss","lieu","prof","dep","tel","urg","visite","src","resp","statut","relance","notes"];
+const H=["Nom","Prénoms","Naissance","Résidence","Profession","Département","Téléphone","Contact d'urgence","Première visite","Provenance","Responsable","Statut","Prochaine relance","Notes"];
+let data=[],church="CAM – Centre Apostolique Metanoia",cc="225",bk="",editId=null,jid=null,flt="all",tab="fiches",sel=new Set(),undo=null,tt,imode="merge";
+let salt=null,ckey=null,sq=Promise.resolve();
+const te=new TextEncoder(),b64=u=>{u=new Uint8Array(u);let s="";for(let i=0;i<u.length;i+=8192)s+=String.fromCharCode.apply(null,u.subarray(i,i+8192));return btoa(s)},ub=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+const derive=async(pw,sl)=>crypto.subtle.deriveKey({name:"PBKDF2",salt:sl,iterations:250000,hash:"SHA-256"},await crypto.subtle.importKey("raw",te.encode(pw),"PBKDF2",false,["deriveKey"]),{name:"AES-GCM",length:256},false,["encrypt","decrypt"]);
+const seal=async(str,key,sl)=>{const iv=crypto.getRandomValues(new Uint8Array(12));return{v:3,salt:b64(sl),iv:b64(iv),ct:b64(await crypto.subtle.encrypt({name:"AES-GCM",iv},key,te.encode(str)))}};
+const unseal=async(o,key)=>JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({name:"AES-GCM",iv:ub(o.iv)},key,ub(o.ct))));
+const norm=()=>data.forEach(r=>{if(MG[r.statut])r.statut=MG[r.statut]});
+const $=id=>document.getElementById(id),now=()=>new Date().toISOString(),today=()=>now().slice(0,10);
+const save=()=>{if(document.body.classList.contains("locked"))return Promise.resolve();try{localStorage.setItem(KEY,JSON.stringify({d:data,c:church,cc,bk}))}catch(e){alert("Enregistrement impossible : espace de stockage plein ou bloqué. Faites une sauvegarde.")}return Promise.resolve()};
+const esc=s=>String(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt=d=>d?new Date(d.slice(0,10)+"T00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"}):"";
+const late=r=>r.relance&&r.relance<=today()&&r.statut!=="Inactif";
+const age=d=>d?Math.floor((Date.now()-new Date(d))/31557600000):"";
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const dg=s=>String(s||"").replace(/\D/g,"");
+const wnum=s=>{let p=dg(s);if(!p)return"";if(p.startsWith("00"))return p.slice(2);return p.length<=10?cc+p:p};
+const nk=r=>((r.nom||"")+(r.prenoms||"")).toLowerCase().normalize("NFD").replace(/[^a-z]/g,"");
+const tk=r=>dg(r.tel).length>=8?dg(r.tel).slice(-8):"";
+const nd=r=>{const n=new Date(),t=new Date(n.getFullYear(),n.getMonth(),n.getDate()),b=new Date(r.naiss+"T00:00");let x=new Date(n.getFullYear(),b.getMonth(),b.getDate());if(x<t)x=new Date(n.getFullYear()+1,b.getMonth(),b.getDate());return Math.round((x-t)/864e5)};
+const turn=r=>{const n=new Date(),b=new Date(r.naiss+"T00:00");let y=n.getFullYear();if(new Date(y,b.getMonth(),b.getDate())<new Date(n.getFullYear(),n.getMonth(),n.getDate()))y++;return y-b.getFullYear()};
+const dl=(txt,type,name)=>{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([txt],{type}));a.download=name;a.click()};
+const ics=(list,name)=>{const y=new Date().getFullYear(),z=n=>String(n).padStart(2,"0"),D=d=>d.getFullYear()+z(d.getMonth()+1)+z(d.getDate()),st=now().replace(/[-:]/g,"").split(".")[0]+"Z",e=t=>String(t||"").replace(/[,;]/g," ");
+  let o="BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//CAM//FR\r\nCALSCALE:GREGORIAN\r\n";
+  list.forEach(r=>{const b=new Date(r.naiss+"T00:00"),d=new Date(y,b.getMonth(),b.getDate()),f=new Date(y,b.getMonth(),b.getDate()+1);
+    o+="BEGIN:VEVENT\r\nUID:"+r.id+"@cam\r\nDTSTAMP:"+st+"\r\nDTSTART;VALUE=DATE:"+D(d)+"\r\nDTEND;VALUE=DATE:"+D(f)+"\r\nRRULE:FREQ=YEARLY\r\nSUMMARY:Anniversaire de "+e(r.prenoms)+" "+e(r.nom)+"\r\nDESCRIPTION:Tel "+e(r.tel)+" - "+e(church)+"\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nDESCRIPTION:Anniversaire demain\r\nTRIGGER:-PT6H\r\nEND:VALARM\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nDESCRIPTION:Anniversaire aujourd hui\r\nTRIGGER:PT8H\r\nEND:VALARM\r\nEND:VEVENT\r\n"});
+  dl(o+"END:VCALENDAR","text/calendar;charset=utf-8",name+".ics")};
+const toast=(m,fn)=>{$("tm").textContent=m;$("tu").style.display=fn?"":"none";undo=fn;$("toast").style.display="flex";clearTimeout(tt);tt=setTimeout(()=>{$("toast").style.display="none";undo=null},6000)};
+const csvOf=l=>{const q=v=>'"'+String(v||"").replace(/"/g,'""')+'"';return"\ufeff"+[H.concat("Créée le").map(q).join(";")].concat(l.map(r=>F.concat("cre").map(k=>q(k==="cre"?(r.cre||"").slice(0,10):r[k])).join(";"))).join("\n")};
+const dupes=()=>{const g={};data.forEach(r=>{[tk(r)&&"t"+tk(r),nk(r)&&"n"+nk(r)].forEach(k=>k&&(g[k]=g[k]||[]).push(r))});const s=new Set();return Object.values(g).filter(a=>a.length>1).filter(a=>{const k=a.map(x=>x.id).sort().join();if(s.has(k))return false;s.add(k);return true})};
+const vals=k=>[...new Set(data.map(r=>r[k]).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"fr"));
+const bars=(m,total)=>{const e=Object.entries(m).sort((a,b)=>b[1]-a[1]);const mx=Math.max(1,...e.map(x=>x[1]));return e.length?e.map(([k,v])=>`<div class="br"><span>${esc(k)}</span><i style="width:${v/mx*100}%"></i><em>${v}</em></div>`).join(""):'<p class="meta">Aucune donnée.</p>'};
+const count=(fn,l=data)=>l.reduce((m,r)=>{const k=fn(r)||"Non précisé";m[k]=(m[k]||0)+1;return m},{});
+
+function render(){
+  $("eg").textContent=church;
+  document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("on",b.dataset.t===tab));
+  ["fiches","stats","data"].forEach(t=>$("v-"+t).hidden=t!==tab);
+  $("add").style.display=tab==="fiches"?"":"none";
+  const d=bk?Math.floor((Date.now()-new Date(bk))/864e5):null;
+  $("banner").innerHTML=data.length&&(d===null||d>14)?`<div class="banner noprint"><span>${d===null?"Aucune sauvegarde faite.":"Dernière sauvegarde il y a "+d+" jours."} Protégez vos fiches.</span><button class="p" data-b="bk">Sauvegarder</button></div>`:"";
+  if(tab==="fiches")renderList();else if(tab==="stats")renderStats();else renderData();
+}
+function renderList(){
+  $("s1").textContent=data.length;$("s2").textContent=data.filter(r=>r.statut==="Nouveau").length;
+  $("s3").textContent=data.filter(late).length;$("s4").textContent=data.filter(r=>r.statut==="Membre").length;
+  const dv=$("sd").value;$("sd").innerHTML='<option value="">Tous les départements</option>'+vals("dep").map(v=>`<option${v===dv?" selected":""}>${esc(v)}</option>`).join("");
+  $("deps").innerHTML=vals("dep").map(v=>`<option value="${esc(v)}">`).join("");$("resps").innerHTML=vals("resp").map(v=>`<option value="${esc(v)}">`).join("");
+  $("chips").innerHTML=[["all","Tous"],["late","À relancer"],...Object.keys(ST).map(s=>[s,s])].map(([k,l])=>`<button class="chip ${flt===k?"on":""}" data-f="${k}">${l}</button>`).join("");
+  const bl=data.filter(r=>r.naiss).map(r=>({r,n:nd(r)})).filter(x=>x.n<=7).sort((x,y)=>x.n-y.n);
+  $("bday").innerHTML=bl.length?`<div class="bday"><b>Anniversaires à venir</b>`+bl.map(({r,n})=>{const p=wnum(r.tel),w=n===0?"Aujourd’hui":n===1?"Demain":"Dans "+n+" jours";
+    const msg=encodeURIComponent("Joyeux anniversaire "+r.prenoms+" ! Que Dieu te bénisse abondamment. Toute la famille "+church);
+    return `<div class="bd ${n===0?"today":""}"><div><b>${w}</b> – ${esc(r.prenoms)} ${esc(r.nom)} (${turn(r)} ans)</div>${p?`<a href="https://wa.me/${p}?text=${msg}" target="_blank" rel="noopener">Souhaiter</a>`:""}</div>`}).join("")+`</div>`:"";
+  const q=$("q").value.toLowerCase(),so=$("so").value,dp=$("sd").value;
+  const rows=data.filter(r=>(flt==="all"||(flt==="late"?late(r):r.statut===flt))&&(!dp||r.dep===dp)&&(F.some(k=>(r[k]||"").toLowerCase().includes(q))||dg(q)&&dg(r.tel).includes(dg(q))||(r.log||[]).some(l=>l.x.toLowerCase().includes(q))));
+  const big="9999";rows.sort((a,b)=>so==="recent"?(b.cre||"").localeCompare(a.cre||""):so==="relance"?(a.relance||big).localeCompare(b.relance||big):so==="anniv"?(a.naiss?nd(a):999)-(b.naiss?nd(b):999):(a.nom+a.prenoms).localeCompare(b.nom+b.prenoms,"fr"));
+  window._rows=rows;$("cnt").textContent=rows.length+" fiche"+(rows.length>1?"s":"")+(rows.length!==data.length?" sur "+data.length:"");
+  sel=new Set([...sel].filter(i=>data.some(r=>r.id===i)));$("selbar").classList.toggle("on",sel.size>0);$("selcnt").textContent=sel.size+" sélectionnée"+(sel.size>1?"s":"");
+  $("list").innerHTML=rows.length?rows.map(r=>{const p=wnum(r.tel),lg=(r.log||[]).slice().sort((a,b)=>b.d.localeCompare(a.d))[0];
+    return `<div class="card ${sel.has(r.id)?"sel":""}" style="--c:${ST[r.statut]||"#999"}">
+    <div class="top"><label><input type="checkbox" class="ck" data-s="${r.id}" ${sel.has(r.id)?"checked":""} aria-label="Sélectionner"><span><h3>${esc(r.prenoms)} ${esc(r.nom).toUpperCase()}</h3>
+    <div class="meta">${[r.naiss?age(r.naiss)+" ans":"",esc(r.prof),esc(r.lieu),r.dep?"Dép. "+esc(r.dep):""].filter(Boolean).join(" – ")}</div></span></label>
+    <span class="badge">${r.statut}</span></div>
+    ${(r.visite||r.src||r.resp)?`<div class="meta">${[r.visite?"Arrivé(e) le "+fmt(r.visite):"",esc(r.src),r.resp?"Suivi par "+esc(r.resp):""].filter(Boolean).join(" – ")}</div>`:""}
+    ${r.relance?`<div class="meta ${late(r)?"late":""}">${late(r)?"À relancer depuis le ":"Relance le "}${fmt(r.relance)}</div>`:""}
+    ${r.urg?`<div class="meta">Urgence : ${esc(r.urg)}</div>`:""}
+    ${r.notes?`<div class="meta">${esc(r.notes)}</div>`:""}
+    ${lg?`<div class="meta">Dernier suivi : ${esc(lg.t)} le ${fmt(lg.d)} – ${esc(lg.x.slice(0,70))}</div>`:""}
+    <div class="btns">${p?`<a href="tel:+${p}">Appeler</a><a class="wa" href="https://wa.me/${p}" target="_blank" rel="noopener">WhatsApp</a>`:""}
+    <button data-j="${r.id}">Journal${(r.log||[]).length?" ("+r.log.length+")":""}</button>
+    ${(r.statut==="Nouveau"||r.statut==="En suivi")?`<button data-n="${r.id}">Étape suivante</button>`:""}${r.naiss?`<button data-c="${r.id}">Rappel anniversaire</button>`:""}
+    <button data-e="${r.id}">Modifier</button><button data-d="${r.id}">Supprimer</button></div></div>`}).join("")
+    :`<div class="empty">${data.length?"Aucune fiche ne correspond à ces critères.":"La base est vide. Touchez « Nouvelle fiche » pour ajouter la première personne, ou importez un fichier dans l’onglet Données."}</div>`;
+}
+function renderStats(){
+  const n=data.length,m=data.filter(r=>r.statut==="Membre").length,mo=[];
+  for(let i=5;i>=0;i--){const d=new Date();d.setDate(1);d.setMonth(d.getMonth()-i);mo.push(d.toISOString().slice(0,7))}
+  const arr=count(r=>(r.visite||r.cre||"").slice(0,7),data),mm={};mo.forEach(k=>mm[new Date(k+"-15").toLocaleDateString("fr-FR",{month:"short",year:"2-digit"})]=arr[k]||0);
+  const ag=r=>{if(!r.naiss)return"";const a=age(r.naiss);return a<18?"Moins de 18 ans":a<=30?"18–30 ans":a<=45?"31–45 ans":a<=60?"46–60 ans":"Plus de 60 ans"};
+  const l30=data.reduce((s,r)=>s+(r.log||[]).filter(l=>Date.now()-new Date(l.d)<30*864e5).length,0);
+  $("v-stats").innerHTML=`<div class="stats"><div class="st"><b>${n}</b><span>Fiches</span></div><div class="st"><b>${n?Math.round(m/n*100):0} %</b><span>Membres intégrés</span></div><div class="st hot"><b>${data.filter(late).length}</b><span>À relancer</span></div><div class="st"><b>${l30}</b><span>Suivis (30 jours)</span></div></div>
+  <div class="two"><div class="panel"><h2>Arrivées sur 6 mois</h2>${bars(mm)}</div><div class="panel"><h2>Statuts</h2>${bars(count(r=>r.statut))}</div>
+  <div class="panel"><h2>Provenance</h2>${bars(count(r=>r.src))}</div><div class="panel"><h2>Départements</h2>${bars(count(r=>r.dep))}</div>
+  <div class="panel"><h2>Tranches d’âge</h2>${bars(count(ag))}</div><div class="panel"><h2>Charge par responsable</h2>${bars(count(r=>r.resp,data.filter(r=>r.statut==="Nouveau"||r.statut==="En suivi")))}</div></div>`;
+}
+function renderData(){
+  $("cc").value=cc;
+  const g=dupes();
+  $("dups").innerHTML=g.length?`<ul class="list2">`+g.map(a=>`<li><span>${a.map(r=>esc(r.prenoms+" "+r.nom)+(r.tel?" ("+esc(r.tel)+")":"")).join(" = ")}</span><button data-m="${a.map(r=>r.id).join(",")}">Fusionner</button></li>`).join("")+`</ul>`:'<p class="meta">Aucun doublon détecté (même numéro ou même nom).</p>';
+  const c=(f,t)=>{const l=data.filter(f);return `<li><span>${t}</span><b${l.length?' class="late"':""}>${l.length}</b></li>`};
+  $("qual").innerHTML=`<ul class="list2">${c(r=>!r.tel,"Sans numéro de téléphone")}${c(r=>!r.naiss,"Sans date de naissance")}${c(r=>!r.resp&&(r.statut==="Nouveau"||r.statut==="En suivi"),"En suivi sans responsable")}${c(r=>!r.relance&&(r.statut==="Nouveau"||r.statut==="En suivi"),"En suivi sans date de relance")}${c(r=>r.tel&&dg(r.tel).length<8,"Numéros trop courts")}</ul>`;
+}
+function openForm(r){
+  editId=r?r.id:null;$("ft").textContent=r?"Modifier la fiche":"Nouvelle fiche";
+  F.forEach(k=>$(k).value=r?(r[k]||""):(k==="statut"?"Nouveau":k==="visite"?today():""));$("dlg").showModal();
+}
+function openJ(id){jid=id;const r=data.find(x=>x.id===id);$("jt").textContent="Journal – "+r.prenoms+" "+r.nom;$("jx").value="";
+  $("jl").innerHTML=(r.log||[]).slice().sort((a,b)=>b.d.localeCompare(a.d)).map(l=>`<div class="lg"><b>${esc(l.t)}</b> – ${fmt(l.d)}<br>${esc(l.x)}</div>`).join("")||'<p class="meta">Aucune entrée.</p>';$("jd").showModal()}
+const delIds=ids=>{const bak=data.slice();data=data.filter(x=>!ids.includes(x.id));sel.clear();save();render();toast(ids.length+" fiche"+(ids.length>1?"s":"")+" supprimée"+(ids.length>1?"s":""),()=>{data=bak;save();render()})};
+function addRows(list){let a=0,s=0;list.forEach(r=>{const dup=data.some(x=>(tk(r)&&tk(x)===tk(r))||(nk(r)&&nk(x)===nk(r)));if(dup){s++;return}data.push({...r,id:uid(),cre:now(),maj:now()});a++});return[a,s]}
+$("add").onclick=()=>openForm();$("cancel").onclick=()=>$("dlg").close();$("jc").onclick=()=>$("jd").close();
+$("q").oninput=render;$("sd").onchange=render;$("so").onchange=render;
+$("eg").onclick=()=>{const n=prompt("Nom de l’église :",church);if(n){church=n.trim();save();render()}};
+$("cc").onchange=e=>{cc=dg(e.target.value)||"225";save();render()};
+$("tu").onclick=()=>{if(undo)undo();$("toast").style.display="none"};
+$("ja").onclick=()=>{const x=$("jx").value.trim();if(!x)return;const r=data.find(y=>y.id===jid);(r.log=r.log||[]).push({d:now(),t:$("jty").value,x});r.maj=now();save();openJ(jid);render()};
+$("f").onsubmit=e=>{e.preventDefault();const r={};F.forEach(k=>r[k]=$(k).value.trim());
+  if(r.tel&&dg(r.tel).length<8&&!confirm("Ce numéro semble trop court. Enregistrer quand même ?"))return;
+  const o=data.find(x=>x.id!==editId&&((tk(r)&&tk(x)===tk(r))||nk(x)===nk(r)));
+  if(o&&!confirm("Une fiche similaire existe déjà : "+o.prenoms+" "+o.nom+". Enregistrer quand même ?"))return;
+  if(editId)data=data.map(x=>x.id===editId?{...x,...r,maj:now()}:x);else data.push({...r,id:uid(),cre:now(),maj:now(),log:[]});
+  save();$("dlg").close();render()};
+document.addEventListener("change",e=>{const s=e.target.dataset.s;if(s){e.target.checked?sel.add(s):sel.delete(s);render()}
+  if(e.target.id==="selst"&&e.target.value){const v=e.target.value;data.forEach(r=>{if(sel.has(r.id)){r.statut=v;r.maj=now()}});e.target.value="";save();render();toast("Statut modifié")}});
+document.addEventListener("click",e=>{
+  const t=e.target.closest("[data-t]");if(t){tab=t.dataset.t;render();return}
+  const b=e.target.closest("[data-f],[data-n],[data-e],[data-d],[data-c],[data-j],[data-m],[data-b]");if(!b)return;const D=b.dataset;
+  if(D.f){flt=D.f;tab="fiches";render()}
+  if(D.c){const r=data.find(x=>x.id===D.c);ics([r],"anniversaire-"+(r.prenoms||"").split(" ")[0])}
+  if(D.e)openForm(data.find(x=>x.id===D.e));
+  if(D.j)openJ(D.j);
+  if(D.d&&confirm("Supprimer cette fiche ?"))delIds([D.d]);
+  if(D.n){const o=Object.keys(ST),r=data.find(x=>x.id===D.n);r.statut=o[Math.min(o.indexOf(r.statut)+1,o.length-1)];
+    const d=new Date();d.setDate(d.getDate()+7);r.relance=r.statut==="Membre"?"":d.toISOString().slice(0,10);r.maj=now();save();render()}
+  if(D.m){const a=D.m.split(",").map(i=>data.find(x=>x.id===i)).filter(Boolean),m=a[0],bak=JSON.parse(JSON.stringify(data));
+    if(!confirm("Fusionner ces "+a.length+" fiches en une seule ?"))return;
+    a.slice(1).forEach(o=>{F.forEach(k=>{if(!m[k])m[k]=o[k]||"";else if(k==="notes"&&o[k]&&o[k]!==m[k])m[k]+="\n"+o[k]});m.log=(m.log||[]).concat(o.log||[])});
+    m.maj=now();data=data.filter(x=>x===m||!a.includes(x));save();render();toast("Fiches fusionnées",()=>{data=bak;save();render()})}
+  if(D.b==="all"){(window._rows||[]).forEach(r=>sel.add(r.id));render()}
+  if(D.b==="none"){sel.clear();render()}
+  if(D.b==="del"&&confirm("Supprimer les "+sel.size+" fiches sélectionnées ?"))delIds([...sel]);
+  if(D.b==="csv")dl(csvOf(data.filter(r=>sel.has(r.id))),"text/csv;charset=utf-8","selection-CAM-"+today()+".csv");
+  if(D.b==="resp"){const v=prompt("Nom du responsable à attribuer aux fiches sélectionnées :");if(v){data.forEach(r=>{if(sel.has(r.id)){r.resp=v.trim();r.maj=now()}});save();render();toast("Responsable attribué")}}
+  if(D.b==="bk")$("bk").click();
+});
+$("bk").onclick=async()=>{const pw=prompt("Choisissez un mot de passe pour chiffrer la sauvegarde (8 caractères minimum) :");if(!pw)return;if(pw.length<8){alert("8 caractères minimum.");return}const sl=crypto.getRandomValues(new Uint8Array(16));bk=now();save();dl(JSON.stringify(await seal(JSON.stringify({v:2,church,cc,d:data}),await derive(pw,sl),sl)),"application/json","sauvegarde-CAM-"+today()+".json");render();toast("Sauvegarde chiffrée téléchargée")};
+$("csv").onclick=()=>dl(csvOf(data),"text/csv;charset=utf-8","base-CAM-"+today()+".csv");
+$("prt").onclick=()=>{tab="fiches";render();setTimeout(()=>print(),150)};
+$("bdics").onclick=()=>{const l=data.filter(r=>r.naiss);if(!l.length){alert("Aucune date de naissance enregistrée.");return}ics(l,"anniversaires-CAM")};
+$("imp").onclick=()=>{imode="merge";$("file").click()};
+$("rs").onclick=()=>{imode="restore";$("file").click()};
+$("wipe").onclick=()=>{if(confirm("Effacer TOUTES les fiches ? Pensez à sauvegarder d’abord.")&&prompt("Tapez EFFACER pour confirmer :")==="EFFACER"){const bak=data;data=[];sel.clear();save();render();toast("Base effacée",()=>{data=bak;save();render()})}};
+$("file").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(!f)return;const txt=(await f.text()).replace(/^\ufeff/,"");
+  try{
+    if(/\.json$/i.test(f.name)){let j=JSON.parse(txt);if(j.ct){const pw=prompt("Mot de passe de cette sauvegarde :");if(!pw)return;try{j=await unseal(j,await derive(pw,ub(j.salt)))}catch(x){alert("Mot de passe incorrect pour cette sauvegarde.");return}}const l=(j.d||j).filter(r=>r&&(r.nom||r.prenoms));
+      if(imode==="restore"){if(!confirm("Remplacer les "+data.length+" fiches actuelles par les "+l.length+" de la sauvegarde ?"))return;data=l.map(r=>({...r,id:r.id||uid()}));if(j.church)church=j.church;if(j.cc)cc=j.cc;toast(l.length+" fiches restaurées")}
+      else{let a=0;l.forEach(r=>{const i=data.findIndex(x=>x.id===r.id);if(i>=0){if((r.maj||"")>(data[i].maj||"")){data[i]=r;a++}}else{const[x]=addRows([r]);a+=x}});toast(a+" fiche(s) ajoutée(s) ou mises à jour")}}
+    else{const rows=[];txt.split(/\r?\n/).filter(Boolean).slice(1).forEach(l=>{
+      const c=l.match(/("([^"]|"")*"|[^;]*)(;|$)/g).map(s=>s.replace(/;$/,"").replace(/^"|"$/g,"").replace(/""/g,'"'));
+      const r={};F.forEach((k,i)=>r[k]=(c[i]||"").trim());r.statut=MG[r.statut]||(ST[r.statut]?r.statut:"Membre");if(r.nom||r.prenoms)rows.push(r)});
+      const[a,s]=addRows(rows);toast(a+" fiche(s) importée(s)"+(s?", "+s+" doublon(s) ignoré(s)":""))}
+    save();render();
+  }catch(err){alert("Fichier illisible : "+err.message)}};
+render();
+
+$("pdfx").onclick=()=>{const L=data.slice().sort((a,b)=>(a.nom+a.prenoms).localeCompare(b.nom+b.prenoms,"fr"));camPDF("Base de données CAM – "+church,["Fiches au "+new Date().toLocaleDateString("fr-FR")+" : "+L.length,{gap:6},...L.flatMap(r=>[{t:(r.prenoms||"")+" "+(r.nom||"").toUpperCase()+" – "+r.statut,b:true},{t:[r.tel,r.lieu,r.prof,r.dep&&"Dép. "+r.dep,r.visite&&"Arrivé(e) le "+r.visite,r.resp&&"Suivi par "+r.resp,r.relance&&"Relance le "+r.relance,r.notes].filter(Boolean).join(" – ")||"—"},{gap:4}])],"base-CAM-"+today()+".pdf")};
+/* Accès : compte CAM */
+function loadDB(){let s={};try{s=JSON.parse(localStorage.getItem(KEY))||{}}catch(e){}data=s.d||[];church=s.c||church;cc=s.cc||cc;bk=s.bk||"";norm()}
+window.onCamUnlock=u=>{loadDB();document.body.classList.remove("locked");render()};
+window.onCamLock=()=>{data=[];sel.clear();undo=null;window._rows=[];document.querySelectorAll("dialog[open]").forEach(d=>d.close());["list","bday","v-stats","dups","qual","banner"].forEach(i=>$(i).innerHTML="");$("q").value="";$("toast").style.display="none";tab="fiches";document.body.classList.add("locked")};
+$("lk").onclick=()=>window.camLock();
+$("old").onclick=async()=>{const raw=localStorage.getItem(OLDKEY);if(!raw){alert("Aucune ancienne base trouvée sur cet appareil.");return}
+ try{let o=JSON.parse(raw);if(o.ct){const pw=prompt("Ancien mot de passe de la base :");if(!pw)return;try{o=await unseal(o,await derive(pw,ub(o.salt)))}catch(x){alert("Mot de passe incorrect.");return}}
+  const[a,s]=addRows((o.d||[]).filter(r=>r&&(r.nom||r.prenoms)));save();render();toast(a+" fiche(s) récupérée(s)"+(s?", "+s+" doublon(s) ignoré(s)":""))}catch(e){alert("Lecture impossible.")}};
+
+},{N:"Base de données CAM",SSO:false});
+
+/* ===== APPLICATION : Présence ===== */
+mount('pres',function(document,window){
+const $=i=>document.getElementById(i),KEY='cam_pres_v1';
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const nk=s=>String(s).toLowerCase().normalize('NFD').replace(/[^a-z]/g,'');
+const fd=d=>d?new Date(d+'T12:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}):'';
+const hs=()=>{try{return window.top.location.hash||''}catch(e){return location.hash||''}};
+let S;try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}if(!S||!S.l)S={l:[],cur:'',bs:'',wa:''};
+const sv=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){alert('Enregistrement impossible.')}};
+const mkS=()=>({id:Date.now().toString(36)+Math.random().toString(36).slice(2,4),ti:'Culte du dimanche',dt:new Date().toISOString().slice(0,10),hr:'09:00',mk:{},gu:[]});
+const cur=()=>S.l.find(x=>x.id===S.cur)||S.l[0];
+
+/* Noms : membres + base CAM + invités */
+function all(){const m=new Map(),add=(n,c)=>{n=String(n||'').trim();if(n&&!m.has(nk(n)))m.set(nk(n),{n,c})};
+ try{JSON.parse(localStorage.getItem('cam_members')||'[]').forEach(x=>add((x.prenom||'')+' '+(x.nom||''),'Membre'))}catch(e){}
+ try{(JSON.parse(localStorage.getItem('cam_db_v1')||'{}').d||[]).forEach(x=>add((x.prenoms||'')+' '+(x.nom||''),'Base CAM'))}catch(e){}
+ const s=cur();if(s){(s.gu||[]).forEach(n=>add(n,'Invité'));Object.values(s.mk).forEach(v=>add(v.n,'Invité'))}
+ return [...m.values()].sort((a,b)=>a.n.localeCompare(b.n,'fr'))}
+
+/* Lien compressé pour le QR */
+const b64u=u=>btoa(String.fromCharCode(...u)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const u8b=s=>Uint8Array.from(atob(s.replace(/-/g,'+').replace(/_/g,'/')),c=>c.charCodeAt(0));
+async function pack(o){const raw=new TextEncoder().encode(JSON.stringify(o));
+ if(window.CompressionStream)return 'z'+b64u(new Uint8Array(await new Response(new Blob([raw]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer()));
+ return 'p'+b64u(raw)}
+async function unpack(s){let u=u8b(s.slice(1));if(s[0]==='z')u=new Uint8Array(await new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer());return JSON.parse(new TextDecoder().decode(u))}
+
+/* Côté responsable */
+const defBase=()=>{let l=location;try{l=window.top.location}catch(e){}return /^https?:$/.test(l.protocol)?l.origin+l.pathname:''};
+function renderAll(){if(!S.l.length){S.l.push(mkS())}const s=cur();S.cur=s.id;
+ $('sv').innerHTML=S.l.slice().sort((a,b)=>b.dt.localeCompare(a.dt)).map(x=>`<option value="${x.id}"${x.id===s.id?' selected':''}>${esc(x.dt+' – '+x.ti)}</option>`).join('');
+ $('ti').value=s.ti;$('dt').value=s.dt;$('hr').value=s.hr;
+ renderList()}
+function renderList(){const s=cur(),q=nk($('q').value),f=$('fl').value,A=all();
+ $('pct').innerHTML=Object.keys(s.mk).length+' / '+A.length+'<small>présents</small>';
+ const L=A.filter(x=>(!q||nk(x.n).includes(q))&&(!f||(f==='p')===!!s.mk[nk(x.n)]));
+ $('ls').innerHTML=L.map(x=>{const m=s.mk[nk(x.n)];return `<div class="row${m?' on':''}"><div><b>${esc(x.n)}</b><span class="mu">${x.c}${m?' · '+new Date(m.t).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):''}</span></div><button class="pb${m?' on':''}" data-pr="${esc(x.n)}">${m?'✓ Présent':'Présent'}</button></div>`}).join('')||'<p class="mu">Aucun nom. Ajoutez des membres dans les autres applications, ou des invités.</p>'}
+function summary(){const s=cur(),A=all(),P=A.filter(x=>s.mk[nk(x.n)]),B=A.filter(x=>!s.mk[nk(x.n)]);
+ return ['✅ PRÉSENCE – '+s.ti,fd(s.dt)+(s.hr?' à '+s.hr:''),'','Présents : '+P.length+' / '+A.length,'','👍 PRÉSENTS',...(P.length?P.map((x,i)=>(i+1)+'. '+x.n):['—']),'','❌ ABSENTS',...(B.length?B.map((x,i)=>(i+1)+'. '+x.n):['—'])].join('\n')}
+function show(t){['ap','qr','rs'].forEach(x=>$('v-'+x).hidden=x!==t);document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));if(t==='rs')$('out').textContent=summary()}
+async function genQR(){const s=cur(),b=defBase();
+ if(!/^https?:\/\//.test(b))return alert("Ouvrez l'application depuis son adresse en ligne (https) pour générer le QR.");
+ if(!s.ck){s.ck=Array.from(crypto.getRandomValues(new Uint8Array(12)),x=>x.toString(16).padStart(2,'0')).join('');sv()}
+ const link=b+'#checkin='+await pack({s:s.id,k:s.ck,t:s.ti,d:s.dt,h:s.hr});
+ window._link=link;$('lkt').textContent='Lien de '+link.length+' caractères'+(link.length>2300?' : trop long pour un QR fiable, réduisez la liste.':'.');
+ $('qw').hidden=false;$('qr').innerHTML='';
+ try{const q=qrcode(0,'L');q.addData(link);q.make();$('qr').innerHTML=q.createImgTag(5,2)}catch(e){$('qr').textContent='Lien trop long pour un QR : réduisez le nombre de noms. Copiez le lien à la place.'}}
+document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset;
+ if(d.t)show(d.t);
+ if(d.pr!==undefined){const s=cur(),k=nk(d.pr);if(s.mk[k])delete s.mk[k];else s.mk[k]={n:d.pr,t:new Date().toISOString(),s:'appel'};sv();renderList()}});
+$('q').oninput=renderList;$('fl').onchange=renderList;
+$('sv').onchange=e=>{S.cur=e.target.value;sv();renderAll()};
+$('nw').onclick=()=>{const s=mkS();S.l.push(s);S.cur=s.id;sv();renderAll()};
+$('del').onclick=()=>{if(!confirm('Supprimer ce service et ses présences ?'))return;S.l=S.l.filter(x=>x.id!==cur().id);S.cur='';sv();renderAll()};
+[['ti','ti'],['dt','dt'],['hr','hr']].forEach(([i,k])=>$(i).oninput=()=>{cur()[k]=$(i).value;sv()});
+$('gu').onclick=()=>{const n=prompt("Nom complet de l'invité :");if(n&&n.trim()){cur().gu.push(n.trim());sv();renderList()}};
+$('gq').onclick=genQR;
+$('cl').onclick=async()=>{try{await navigator.clipboard.writeText(window._link||'');alert('Lien copié.')}catch(e){prompt('Copiez le lien :',window._link||'')}};
+$('pq').onclick=()=>window.print();
+$('cp').onclick=async()=>{try{await navigator.clipboard.writeText(summary());alert('Copié.')}catch(e){alert('Copie impossible.')}};
+$('wp').onclick=()=>window.open('https://wa.me/?text='+encodeURIComponent(summary()),'_blank');
+$('pdf').onclick=()=>{const s=cur();camPDF('Présence – '+s.ti,summary().split('\n'),'presence-'+s.dt+'.pdf')};
+$('csv').onclick=()=>{const s=cur(),R=[['Nom','Statut','Heure','Origine','Service','Date']];all().forEach(x=>{const m=s.mk[nk(x.n)];R.push([x.n,m?'Présent':'Absent',m?new Date(m.t).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'',m?m.s:'',s.ti,s.dt])});camCSV(R,'presence-'+s.dt+'.csv')};
+
+/* Côté personne qui pointe : scan du QR ou mode accueil */
+function checkin(info,mode){
+ $('adm').hidden=true;$('pub').hidden=false;$('pt').textContent=info.t;$('pdt').textContent=[fd(info.d),info.h].filter(Boolean).join(' – ');$('pex').hidden=mode!=='kiosk';
+ $('p1').hidden=false;$('p2').hidden=$('p3').hidden=true;$('ps').value='';drawN(info,mode)}
+let nT=0;
+function drawN(info,mode){const q=nk($('ps').value);
+ const showN=L=>{$('pl').innerHTML=L.map(n=>`<button class="nm" data-nm="${esc(n)}">${esc(n)}</button>`).join('')};
+ if(info.n){const L=info.n.filter(n=>!q||nk(n).includes(q)).slice(0,60);showN(L);$('pn').textContent=info.n.length>L.length?'Tapez les premières lettres pour trouver votre nom.':''}
+ else if(q.length<2){showN([]);$('pn').textContent='Tapez au moins 2 lettres de votre nom.'}
+ else{clearTimeout(nT);nT=setTimeout(async()=>{
+  try{const r=await fetch('/api/checkin/names',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({s:info.s,c:info.k||'',q:$('ps').value})});const j=await r.json(),L=j.names||[];showN(L);$('pn').textContent=L.length?'':'Aucun nom trouvé. Vérifiez l\'orthographe ou voyez avec l\'accueil.'}
+  catch(e){$('pn').textContent='Connexion impossible. Réessayez.'}},250)}
+ $('ps').oninput=()=>drawN(info,mode);
+ $('pl').onclick=e=>{const b=e.target.closest('[data-nm]');if(!b)return;const n=b.dataset.nm;$('p1').hidden=true;$('p2').hidden=false;$('pq2').textContent='Vous êtes '+n+' ?';
+  $('pno').onclick=()=>{$('p2').hidden=true;$('p1').hidden=false};$('pyes').onclick=()=>present(info,mode,n)}}
+function present(info,mode,n){
+ if(mode==='kiosk'){const s=cur();s.mk[nk(n)]={n,t:new Date().toISOString(),s:'accueil'};sv();fin(info,n,'kiosk',true);setTimeout(()=>{if(!$('pub').hidden)checkin(info,'kiosk')},2500);return}
+ fetch('/api/checkin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({s:info.s,n:n,c:info.k||''})}).then(r=>{if(!r.ok)throw 0;fin(info,n,'scan',true)}).catch(()=>fin(info,n,'scan',false))}
+function fin(info,n,mode,sent){$('p1').hidden=$('p2').hidden=true;$('p3').hidden=false;
+ $('pdn').textContent=sent?'Merci '+n:n;
+ $('pms').textContent=sent?(mode==='kiosk'?'Présence enregistrée.':'Présence enregistrée. Merci !'):'Impossible d\'enregistrer votre présence pour le moment. Réessayez, ou voyez avec l\'accueil.';
+ $('pact').innerHTML=sent?'':'<button class="p big" id="pr2">Réessayer</button>';
+ if($('pr2'))$('pr2').onclick=()=>{$('p3').hidden=true;present(info,mode,n)}}
+$('kb').onclick=()=>{const s=cur();checkin({s:s.id,t:s.ti,d:s.dt,h:s.hr,n:all().map(x=>x.n)},'kiosk')};
+$('pex').onclick=()=>{$('pub').hidden=true;$('adm').hidden=false;renderAll()};
+
+/* Démarrage : lien du QR (public) ou espace du responsable (connecté) */
+const mm=hs().match(/#checkin=(.+)$/);
+window.onCamUnlock=()=>{if(mm)return;$('adm').hidden=false;renderAll()};
+window.onCamLock=()=>{$('adm').hidden=true;$('pub').hidden=true};
+if(mm)unpack(mm[1]).then(i=>checkin(i,'scan')).catch(()=>{document.body.innerHTML='<p style="padding:24px">Lien de présence invalide.</p>'});
+window.camReload=()=>{try{const x=JSON.parse(localStorage.getItem(KEY));if(x&&x.l)S=x}catch(e){}if(!$('adm').hidden)renderAll()};
+window.addEventListener('cam-sync',()=>{if(!$('adm').hidden)window.camReload()});
+},{N:"Présence",SSO:true});
+
+/* ===== APPLICATION : Compte rendu de culte ===== */
+mount('cr',function(document,window){
+const $=i=>document.getElementById(i);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const DEP=['Louange & musique','Accueil','Protocole','Sécurité','Intercession','Enfants','Jeunesse','Média / Technique','Entretien / Propreté','Évangélisation','Autre'];
+const T={
+ abs:[['nom','Nom de la personne absente'],['motif','Motif','select',['Maladie','Voyage','Travail','Famille / deuil','Études','Non justifié','Autre']],['prev','Prévenu à l\'avance ?','select',['Oui','Non']],['rempl','Remplacé par / conséquence']],
+ mal:[['nom','Nom'],['etat','Situation (maladie, hospitalisation…)'],['suite','Suite à donner','select',['Prière','Visite','Appel','Aide matérielle','Aucune']]],
+ imp:[['quoi','Que s\'est-il passé ?','area'],['gr','Gravité','select',['Mineur','Moyen','Grave']],['sol','Solution apportée']],
+ chg:[['type','Type de changement','select',['Programme','Personnel','Matériel','Horaire','Autre']],['desc','Détail'],['raison','Raison']]
+};
+const TT={abs:'2. Absences et motifs',mal:'3. Personnes malades / à suivre',imp:'4. Imprévus survenus',chg:'5. Changements effectués'};
+const H=()=>{try{return JSON.parse(localStorage.getItem('cam_cr')||'[]')}catch(e){return[]}};
+let cur=null;
+
+$('dep').innerHTML=DEP.map(x=>`<option>${x}</option>`).join('');
+$('date').value=new Date().toISOString().slice(0,10);
+try{$('resp').value=localStorage.getItem('cam_resp')||''}catch(e){}
+$('secs').innerHTML=Object.keys(TT).map(k=>`<div class="card"><h2>${TT[k]}</h2><div id="L_${k}"></div><button class="add" data-add="${k}">+ Ajouter</button></div>`).join('');
+
+function row(k){
+ const d=document.createElement('div');d.className='it';
+ d.innerHTML=T[k].map(([n,l,t,o])=>`<label>${l}</label>`+(t==='select'?`<select data-k="${n}">${o.map(x=>`<option>${x}</option>`).join('')}</select>`:t==='area'?`<textarea data-k="${n}"></textarea>`:`<input data-k="${n}">`)).join('')+'<button data-rm style="margin-top:8px">Retirer</button>';
+ $('L_'+k).append(d)}
+
+const rows=k=>[...document.querySelectorAll('#L_'+k+' .it')]
+ .map(d=>Object.fromEntries([...d.querySelectorAll('[data-k]')].map(e=>[e.dataset.k,e.value.trim()])))
+ .filter(o=>o[T[k][0][0]]);
+
+const data=()=>({id:'r'+Date.now().toString(36),dep:$('dep').value,resp:$('resp').value.trim(),date:$('date').value,typ:$('typ').value,prev:$('prev').value,pres:$('pres').value,pon:$('pon').value,abs:rows('abs'),mal:rows('mal'),imp:rows('imp'),chg:rows('chg'),pos:$('pos').value.trim(),dif:$('dif').value.trim(),bes:$('bes').value.trim(),dec:$('dec').value.trim()});
+
+function txt(d){
+ const L=[],fd=d.date?new Date(d.date+'T12:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}):'';
+ L.push('📋 COMPTE RENDU – '+d.dep.toUpperCase(),'Culte : '+d.typ+' – '+fd,'Responsable : '+(d.resp||'—'),'');
+ L.push('👥 Effectif : '+(d.pres||'?')+' présent(s) sur '+(d.prev||'?')+' prévu(s)'+(d.prev&&d.pres?' ('+Math.max(0,d.prev-d.pres)+' absent(s))':''),'⏰ Ponctualité : '+d.pon,'');
+ const sec=(t,a,f)=>{L.push(t);a.length?a.forEach((o,i)=>L.push((i+1)+'. '+f(o))):L.push('Néant');L.push('')};
+ sec('❌ ABSENCES',d.abs,o=>`${o.nom} – ${o.motif} (prévenu : ${o.prev})${o.rempl?' – '+o.rempl:''}`);
+ sec('🤒 MALADES / À SUIVRE',d.mal,o=>`${o.nom} – ${o.etat||'—'} → ${o.suite}`);
+ sec('⚠️ IMPRÉVUS',d.imp,o=>`[${o.gr}] ${o.quoi}${o.sol?' → Solution : '+o.sol:''}`);
+ sec('🔄 CHANGEMENTS',d.chg,o=>`${o.type} : ${o.desc||'—'}${o.raison?' (raison : '+o.raison+')':''}`);
+ [['✅ POINTS POSITIFS',d.pos],['⚠️ DIFFICULTÉS',d.dif],['🙏 BESOINS / DEMANDES',d.bes],['📌 DÉCISIONS / SUITE',d.dec]].forEach(([t,v])=>L.push(t,v||'Néant',''));
+ return L.join('\n').trim()}
+
+$('gen').onclick=()=>{
+ if(!$('resp').value.trim())return alert('Indiquez le nom du responsable.');
+ try{localStorage.setItem('cam_resp',$('resp').value.trim())}catch(e){}
+ cur=data();$('out').textContent=txt(cur);$('ob').hidden=false;$('ob').scrollIntoView({behavior:'smooth'})};
+$('cp').onclick=async()=>{try{await navigator.clipboard.writeText($('out').textContent);alert('Copié.')}catch(e){alert('Copie impossible : sélectionnez le texte manuellement.')}};
+$('wa').onclick=()=>window.open('https://wa.me/?text='+encodeURIComponent($('out').textContent),'_blank');
+const crHead=['Date','Département','Responsable','Type de culte','Effectif prévu','Effectif présent','Ponctualité','Absences','Malades','Imprévus','Changements','Points positifs','Difficultés','Besoins','Décisions'];
+const crRow=d=>[d.date,d.dep,d.resp,d.typ,d.prev,d.pres,d.pon,d.abs.map(o=>o.nom+' ('+o.motif+')').join(' / '),d.mal.map(o=>o.nom+' ('+o.etat+')').join(' / '),d.imp.map(o=>o.quoi).join(' / '),d.chg.map(o=>o.type+' : '+o.desc).join(' / '),d.pos,d.dif,d.bes,d.dec];
+$('pdf').onclick=()=>camPDF('Compte rendu – '+cur.dep,txt(cur).split('\n'),'compte-rendu-'+camSlug(cur.dep)+'-'+cur.date+'.pdf');
+$('csv').onclick=()=>camCSV([crHead,crRow(cur)],'compte-rendu-'+camSlug(cur.dep)+'-'+cur.date+'.csv');
+$('csvall').onclick=()=>{const h=H();if(!h.length)return alert('Aucun compte rendu enregistré.');camCSV([crHead,...h.map(crRow)],'comptes-rendus.csv')};
+$('sv').onclick=()=>{const h=H(),i=h.findIndex(x=>x.id===cur.id);i<0?h.unshift(cur):h[i]=cur;try{localStorage.setItem('cam_cr',JSON.stringify(h));alert('Compte rendu enregistré.')}catch(e){alert('Enregistrement impossible sur cet appareil.')}};
+
+function hist(){
+ const h=H();
+ $('hl').innerHTML=h.length?h.map(d=>`<div class="card"><b>${esc(d.dep)}</b> · ${esc(d.date)}
+ <div class="mu">${esc(d.resp)} – ${d.abs.length} absence(s), ${d.mal.length} malade(s), ${d.imp.length} imprévu(s)</div>
+ <div class="act" style="margin-top:8px"><button data-v="${d.id}">Voir</button><button data-c="${d.id}">Copier</button><button data-p="${d.id}">PDF</button><button data-x="${d.id}">Supprimer</button></div>
+ <pre hidden id="p${d.id}"></pre></div>`).join(''):'<p class="mu">Aucun compte rendu enregistré.</p>'}
+
+document.addEventListener('click',async e=>{
+ const t=e.target,D=t.dataset;
+ if(D.add)row(D.add);
+ if(D.p){const d=H().find(x=>x.id===D.p);camPDF('Compte rendu – '+d.dep,txt(d).split('\n'),'compte-rendu-'+camSlug(d.dep)+'-'+d.date+'.pdf')}
+ if('rm' in D)t.parentElement.remove();
+ if(D.v){const p=$('p'+D.v);p.textContent=txt(H().find(x=>x.id===D.v));p.hidden=!p.hidden}
+ if(D.c){try{await navigator.clipboard.writeText(txt(H().find(x=>x.id===D.c)));alert('Copié.')}catch(err){}}
+ if(D.x&&confirm('Supprimer ce compte rendu ?')){try{localStorage.setItem('cam_cr',JSON.stringify(H().filter(x=>x.id!==D.x)))}catch(err){}hist()}
+});
+const tab=n=>{$('v1').hidden=n!==1;$('v2').hidden=n!==2;$('t1').className=n===1?'on':'';$('t2').className=n===2?'on':'';if(n===2)hist()};
+$('t1').onclick=()=>tab(1);$('t2').onclick=()=>tab(2);
+
+},null);
+
+/* ===== APPLICATION : Préparation du culte ===== */
+mount('prep',function(document,window){
+const $=i=>document.getElementById(i),KEY='cam_prep_v1';
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const DEPS=['Louange & musique','Accueil','Protocole','Sécurité','Intercession','Enfants','Jeunesse','Média / Technique','Entretien / Propreté','Évangélisation','Autre'];
+const ELEM=['Accueil',"Prière d'ouverture",'Louange & adoration','Annonces','Offrande','Message','Appel / prière','Sainte-cène','Témoignage',"Prière de clôture"];
+const PROG0=[['Accueil',15],["Prière d'ouverture",5],['Louange & adoration',30],['Annonces',10],['Offrande',10],['Message',40],["Prière de clôture",10]];
+const CHK0=['Salle propre et rangée','Chaises et estrade installées','Sonorisation testée','Projection / paroles prêtes',"Équipe d'accueil briefée",'Équipe de sécurité en place','Salle des enfants prête','Offrande : corbeilles et comptage prévus','Annonces transmises','Prédicateur confirmé'];
+$('dl-e').innerHTML=ELEM.map(x=>`<option value="${esc(x)}">`).join('');$('dl-d').innerHTML=DEPS.map(x=>`<option value="${esc(x)}">`).join('');
+const nextSun=()=>{const d=new Date();d.setDate(d.getDate()+(7-d.getDay())%7);return d.toISOString().slice(0,10)};
+const blank=()=>({id:Date.now().toString(36)+Math.random().toString(36).slice(2,4),date:nextSun(),heure:'09:00',type:'Culte du dimanche',theme:'',pred:'',texte:'',chants:'',ann:'',
+ prog:PROG0.map(([e,d])=>({e,d,r:'',n:''})),eq:[],chk:CHK0.map(t=>({t,r:'',e:'',ok:false}))});
+let S;try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+if(!S||!S.list||!S.list.length){const c=blank();S={cur:c.id,list:[c]}}
+let C=S.list.find(x=>x.id===S.cur)||S.list[0],tab='inf';
+const sv=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){alert('Enregistrement impossible : stockage plein ou bloqué.')}};
+const fd=d=>d?new Date(d+'T12:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}):'';
+const lab=c=>(c.date||'sans date')+' – '+c.type+(c.theme?' – '+c.theme:'');
+const hm=m=>String(Math.floor(m/60)%24).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
+const t0=()=>{const [h,m]=(C.heure||'09:00').split(':').map(Number);return (h||0)*60+(m||0)};
+const dur=m=>(m>=60?Math.floor(m/60)+' h ':'')+String(m%60).padStart(2,'0')+(m>=60?'':' min');
+const total=()=>C.prog.reduce((s,p)=>s+(+p.d||0),0);
+
+function renderSel(){$('sel').innerHTML=S.list.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(c=>`<option value="${c.id}"${c.id===C.id?' selected':''}>${esc(lab(c))}</option>`).join('')}
+function renderInfo(){document.querySelectorAll('[data-f]').forEach(el=>el.value=C[el.dataset.f]||'')}
+function renderProg(){let t=t0();
+ $('lp').innerHTML=C.prog.map((p,i)=>{const h=hm(t);t+=+p.d||0;return `<div class="rw pr"><div class="tm">${h}</div>
+ <input data-l="prog" data-i="${i}" data-k="e" list="dl-e" value="${esc(p.e)}" placeholder="Moment">
+ <input data-l="prog" data-i="${i}" data-k="d" type="number" min="0" value="${p.d}" aria-label="Minutes">
+ <input data-l="prog" data-i="${i}" data-k="r" value="${esc(p.r)}" placeholder="Responsable">
+ <input data-l="prog" data-i="${i}" data-k="n" value="${esc(p.n)}" placeholder="Note">
+ <div class="mv"><button data-up="${i}">↑</button><button data-dn="${i}">↓</button><button data-rm="prog:${i}">✕</button></div></div>`}).join('')||'<p class="mu">Aucun moment.</p>';meta()}
+function renderEq(){
+ $('le').innerHTML=C.eq.map((p,i)=>`<div class="rw eq">
+ <input data-l="eq" data-i="${i}" data-k="d" list="dl-d" value="${esc(p.d)}" placeholder="Département">
+ <input data-l="eq" data-i="${i}" data-k="n" value="${esc(p.n)}" placeholder="Nom">
+ <input data-l="eq" data-i="${i}" data-k="r" value="${esc(p.r)}" placeholder="Rôle">
+ <select data-l="eq" data-i="${i}" data-k="s">${['À confirmer','Confirmé','Absent'].map(o=>`<option${(p.s||'À confirmer')===o?' selected':''}>${o}</option>`).join('')}</select>
+ <button data-rm="eq:${i}">✕</button></div>`).join('')||'<p class="mu">Ajoutez les responsables de chaque département pour ce culte.</p>';meta()}
+function renderChk(){
+ $('lc').innerHTML=C.chk.map((p,i)=>`<div class="rw ck"><input class="ckb" type="checkbox" data-l="chk" data-i="${i}" data-k="ok"${p.ok?' checked':''}>
+ <input data-l="chk" data-i="${i}" data-k="t" value="${esc(p.t)}" placeholder="Tâche">
+ <input data-l="chk" data-i="${i}" data-k="r" value="${esc(p.r)}" placeholder="Responsable">
+ <input data-l="chk" data-i="${i}" data-k="e" type="date" value="${esc(p.e)}">
+ <button data-rm="chk:${i}">✕</button></div>`).join('');meta()}
+function meta(){
+ const m=total(),done=C.chk.filter(x=>x.ok).length,n=C.chk.length,ab=C.eq.filter(x=>x.s==='Absent').length,ac=C.eq.filter(x=>(x.s||'À confirmer')==='À confirmer').length;
+ $('tp').textContent='Durée totale : '+dur(m)+' – fin prévue vers '+hm(t0()+m);
+ $('te').textContent=C.eq.length?C.eq.length+' personne(s) – '+ac+' à confirmer – '+ab+' absente(s)':'';
+ $('pct').innerHTML=(n?Math.round(done/n*100):0)+' %<small>'+done+'/'+n+' tâches prêtes</small>'}
+function summary(){const L=[];let t=t0();
+ L.push('🗓️ PRÉPARATION DU CULTE',C.type+' – '+fd(C.date)+' à '+(C.heure||'—'));
+ if(C.theme)L.push('Thème : '+C.theme);
+ if(C.pred||C.texte)L.push([C.pred&&'Prédicateur : '+C.pred,C.texte&&'Texte : '+C.texte].filter(Boolean).join(' | '));
+ L.push('','📋 PROGRAMME');C.prog.forEach(p=>{L.push(hm(t)+' – '+(p.e||'—')+' ('+(p.d||0)+' min)'+(p.r?' – '+p.r:'')+(p.n?' ['+p.n+']':''));t+=+p.d||0});
+ L.push('Durée totale : '+dur(total())+' (fin vers '+hm(t)+')');
+ if(C.eq.length){L.push('','👥 ÉQUIPES');C.eq.forEach(p=>L.push((p.d||'—')+' : '+(p.n||'—')+(p.r?' ('+p.r+')':'')+' – '+(p.s||'À confirmer')))}
+ const ab=C.eq.filter(x=>x.s==='Absent');if(ab.length)L.push('⚠️ À REMPLACER : '+ab.map(x=>(x.n||'?')+' ('+(x.d||'—')+')').join(', '));
+ L.push('','✅ CHECKLIST ('+C.chk.filter(x=>x.ok).length+'/'+C.chk.length+')');C.chk.forEach(p=>L.push((p.ok?'☑ ':'☐ ')+p.t+(p.r?' – '+p.r:'')+(p.e?' (pour le '+p.e+')':'')));
+ if(C.chants.trim())L.push('','🎵 CHANTS',C.chants.trim());
+ if(C.ann.trim())L.push('','📢 ANNONCES',C.ann.trim());
+ return L.join('\n')}
+function renderRes(){
+ const ab=C.eq.filter(x=>x.s==='Absent').length,ac=C.eq.filter(x=>(x.s||'À confirmer')==='À confirmer').length,od=C.chk.filter(x=>!x.ok&&x.e&&x.e<new Date().toISOString().slice(0,10)).length,al=[];
+ if(ab)al.push(ab+' personne(s) absente(s) à remplacer');if(ac)al.push(ac+' personne(s) à confirmer');if(od)al.push(od+' tâche(s) en retard');if(!C.pred)al.push('Prédicateur non renseigné');
+ $('al').innerHTML=al.length?'<div class="alert"><b>À régler :</b><br>'+al.map(esc).join('<br>')+'</div>':'';$('out').textContent=summary()}
+function show(t){tab=t;['inf','prog','eq','chk','res'].forEach(x=>$('v-'+x).hidden=x!==t);document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));if(t==='res')renderRes()}
+function all(){renderSel();renderInfo();renderProg();renderEq();renderChk();show(tab)}
+document.addEventListener('input',e=>{const t=e.target,d=t.dataset;
+ if(d.f){C[d.f]=t.value;sv();renderSel();if(d.f==='heure')renderProg()}
+ if(d.l){const v=t.type==='checkbox'?t.checked:t.value;C[d.l][d.i][d.k]=d.k==='d'&&d.l==='prog'?(+v||0):v;sv();meta();if(d.l==='prog'&&d.k==='d')renderProgTimes()}});
+function renderProgTimes(){let t=t0();document.querySelectorAll('#lp .tm').forEach((el,i)=>{el.textContent=hm(t);t+=+C.prog[i].d||0})}
+document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset;
+ if(d.t)show(d.t);
+ if(d.add){C[d.add].push(d.add==='prog'?{e:'',d:10,r:'',n:''}:d.add==='eq'?{d:'',n:'',r:'',s:'À confirmer'}:{t:'',r:'',e:'',ok:false});sv();all()}
+ if(d.rm){const[l,i]=d.rm.split(':');C[l].splice(+i,1);sv();all()}
+ if(d.up!==undefined&&+d.up>0){const i=+d.up;[C.prog[i-1],C.prog[i]]=[C.prog[i],C.prog[i-1]];sv();renderProg()}
+ if(d.dn!==undefined&&+d.dn<C.prog.length-1){const i=+d.dn;[C.prog[i+1],C.prog[i]]=[C.prog[i],C.prog[i+1]];sv();renderProg()}});
+$('sel').onchange=e=>{S.cur=e.target.value;C=S.list.find(x=>x.id===S.cur);sv();all()};
+$('nw').onclick=()=>{C=blank();S.list.push(C);S.cur=C.id;sv();tab='inf';all()};
+$('dup').onclick=()=>{const c=JSON.parse(JSON.stringify(C));c.id=Date.now().toString(36);c.chk.forEach(x=>x.ok=false);c.eq.forEach(x=>x.s='À confirmer');c.date=nextSun();S.list.push(c);C=c;S.cur=c.id;sv();all()};
+$('del').onclick=()=>{if(!confirm('Supprimer ce culte ?'))return;S.list=S.list.filter(x=>x.id!==C.id);if(!S.list.length)S.list.push(blank());C=S.list[0];S.cur=C.id;sv();all()};
+$('cp').onclick=async()=>{try{await navigator.clipboard.writeText($('out').textContent);alert('Copié.')}catch(e){alert('Copie impossible : sélectionnez le texte.')}};
+$('wa').onclick=()=>window.open('https://wa.me/?text='+encodeURIComponent($('out').textContent),'_blank');
+$('pdf').onclick=()=>camPDF('Préparation du culte',summary().split('\n'),'preparation-culte-'+(C.date||'')+'.pdf');
+$('csv').onclick=()=>{let t=t0();const R=[['Section','Heure / Département','Élément / Nom','Responsable / Rôle','Détail','Statut']];
+ C.prog.forEach(p=>{R.push(['Programme',hm(t),p.e,p.r,(p.d||0)+' min'+(p.n?' – '+p.n:''),'']);t+=+p.d||0});
+ C.eq.forEach(p=>R.push(['Équipe',p.d,p.n,p.r,'',p.s||'À confirmer']));
+ C.chk.forEach(p=>R.push(['Checklist','',p.t,p.r,p.e,p.ok?'Fait':'À faire']));
+ camCSV(R,'preparation-culte-'+(C.date||'')+'.csv')};
+all();
+window.camReload=()=>{try{const x=JSON.parse(localStorage.getItem(KEY));if(x&&x.list&&x.list.length){S=x;C=S.list.find(i=>i.id===S.cur)||S.list[0]}}catch(e){}all()};
+},null);
+
+/* ===== APPLICATION : Programmation des départements ===== */
+mount('prog',function(document,window){
+const $=i=>document.getElementById(i),KEY='cam_prog_v1';
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const DEPS=['Louange & musique','Accueil','Protocole','Sécurité','Intercession','Enfants','Jeunesse','Média / Technique','Entretien / Propreté','Évangélisation','Autre'];
+const MUS=DEPS[0];
+const POSTES={Accueil:['Porte principale','Placement','Nouveaux venus'],Protocole:['Responsable','Estrade','Invités'],'Sécurité':['Entrée','Parking','Salle'],Intercession:['Ouverture','Pendant le message','Clôture'],Enfants:['Responsable','Enseignant','Aide'],Jeunesse:['Responsable','Animation','Aide'],'Média / Technique':['Son','Projection','Caméra / Live'],'Entretien / Propreté':['Avant le culte','Après le culte']};
+const INST=['Clavier','Guitare','Basse','Batterie','Percussions'];
+let S;try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}if(!S||!S.l)S={l:[]};
+const sv=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){alert('Enregistrement impossible.')}};
+$('dep').innerHTML=DEPS.map(x=>`<option>${x}</option>`).join('');
+$('dt').value=new Date().toISOString().slice(0,10);
+try{const m=JSON.parse(localStorage.getItem('cam_members')||'[]');$('names').innerHTML=m.map(x=>`<option value="${esc((x.prenom||'')+' '+(x.nom||''))}">`).join('')}catch(e){}
+const fd=d=>d?new Date(d+'T12:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}):'Sans date';
+const nl=s=>String(s||'').split('\n').map(x=>x.trim()).filter(Boolean);
+
+function mk(dep,date){
+ const base={id:Date.now().toString(36),dep,date,heure:'09:00',note:''};
+ return dep===MUS?{...base,warm:'',wor:'',ch:'',mus:INST.map(i=>({a:i,n:''})),chants:''}
+  :{...base,rows:(POSTES[dep]||['Responsable','Équipe']).map(p=>({a:p,n:''}))}}
+
+const row=(id,list,i,r,ph)=>`<div class="r"><input data-id="${id}" data-l="${list}" data-i="${i}" data-k="a" value="${esc(r.a)}" placeholder="${ph}"><input list="names" data-id="${id}" data-l="${list}" data-i="${i}" data-k="n" value="${esc(r.n)}" placeholder="Nom"><button data-rm="${id}:${list}:${i}">✕</button></div>`;
+const inp=(id,k,l,v,ph)=>`<label>${l}</label><input list="names" data-id="${id}" data-k="${k}" value="${esc(v)}" placeholder="${ph||''}">`;
+
+function render(){
+ const dep=$('dep').value,L=S.l.filter(x=>x.dep===dep).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+ $('L').innerHTML=L.length?L.map(p=>{
+  const mus=p.dep===MUS;
+  return `<div class="card"><div class="hd"><b>${esc(fd(p.date))}</b><button class="d" data-del="${p.id}">Supprimer</button></div>
+  <div class="g"><div><label>Date</label><input type="date" data-id="${p.id}" data-k="date" value="${esc(p.date)}"></div><div><label>Heure</label><input type="time" data-id="${p.id}" data-k="heure" value="${esc(p.heure)}"></div></div>
+  ${mus?`<div class="star"><div class="g">${inp(p.id,'warm','🔥 Lead warmup',p.warm,'Qui lance la préparation ?')}${inp(p.id,'wor','🎤 Lead worship',p.wor,'Qui dirige l\'adoration ?')}</div></div>
+  <h2>Chœurs</h2><textarea data-id="${p.id}" data-k="ch" placeholder="Un nom par ligne">${esc(p.ch)}</textarea>
+  <h2>Musiciens</h2>${p.mus.map((r,i)=>row(p.id,'mus',i,r,'Instrument')).join('')}<button class="add" data-add="${p.id}:mus">+ Ajouter un musicien</button>
+  <h2>Chants prévus</h2><textarea data-id="${p.id}" data-k="chants" placeholder="Un chant par ligne">${esc(p.chants)}</textarea>`
+  :`<h2>Équipe du jour</h2>${p.rows.map((r,i)=>row(p.id,'rows',i,r,'Poste')).join('')}<button class="add" data-add="${p.id}:rows">+ Ajouter un poste</button>`}
+  <label>Notes</label><textarea data-id="${p.id}" data-k="note">${esc(p.note)}</textarea>
+  <div class="row noprint" style="margin-top:10px;grid-template-columns:repeat(2,minmax(0,1fr))"><button data-cp="${p.id}">Copier</button><button class="p" data-wa="${p.id}">WhatsApp</button><button data-pdf="${p.id}">Télécharger PDF</button><button data-csv="${p.id}">Télécharger CSV</button></div></div>`}).join('')
+ :'<p class="mu">Aucune programmation pour ce département. Choisissez une date puis touchez « Nouvelle programmation ».</p>'}
+
+function txt(p){
+ const L=['📅 PROGRAMMATION – '+p.dep.toUpperCase(),fd(p.date)+' à '+(p.heure||'—'),''];
+ if(p.dep===MUS){
+  L.push('🔥 Lead warmup : '+(p.warm||'—'),'🎤 Lead worship : '+(p.wor||'—'),'','🎶 CHŒURS');
+  const c=nl(p.ch);c.length?c.forEach((n,i)=>L.push((i+1)+'. '+n)):L.push('—');
+  L.push('','🎸 MUSICIENS');p.mus.filter(m=>m.a||m.n).forEach(m=>L.push(m.a+' : '+(m.n||'—')));
+  if(nl(p.chants).length)L.push('','🎵 CHANTS',...nl(p.chants));
+ }else{L.push('👥 ÉQUIPE');p.rows.filter(m=>m.a||m.n).forEach(m=>L.push(m.a+' : '+(m.n||'—')))}
+ if(p.note.trim())L.push('','📝 '+p.note.trim());
+ return L.join('\n')}
+
+document.addEventListener('input',e=>{const t=e.target,d=t.dataset,p=S.l.find(x=>x.id===d.id);if(!p)return;
+ if(d.l)p[d.l][d.i][d.k]=t.value;else p[d.k]=t.value;sv();
+ if(d.k==='date'&&!d.l)t.closest('.card').querySelector('.hd b').textContent=fd(t.value)});
+document.addEventListener('click',async e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset;
+ if(d.del&&confirm('Supprimer cette programmation ?')){S.l=S.l.filter(x=>x.id!==d.del);sv();render()}
+ if(d.add){const[id,l]=d.add.split(':');S.l.find(x=>x.id===id)[l].push({a:'',n:''});sv();render()}
+ if(d.rm){const[id,l,i]=d.rm.split(':');S.l.find(x=>x.id===id)[l].splice(+i,1);sv();render()}
+ if(d.cp){try{await navigator.clipboard.writeText(txt(S.l.find(x=>x.id===d.cp)));alert('Copié.')}catch(x){alert('Copie impossible.')}}
+ if(d.wa)window.open('https://wa.me/?text='+encodeURIComponent(txt(S.l.find(x=>x.id===d.wa))),'_blank');
+ if(d.pdf){const p=S.l.find(x=>x.id===d.pdf);camPDF('Programmation – '+p.dep,txt(p).split('\n'),'programmation-'+camSlug(p.dep)+'-'+p.date+'.pdf')}
+ if(d.csv){const p=S.l.find(x=>x.id===d.csv),R=[['Département','Date','Heure','Poste / Instrument','Nom']],B=[p.dep,p.date,p.heure];
+  if(p.dep===MUS){R.push([...B,'Lead warmup',p.warm]);R.push([...B,'Lead worship',p.wor]);nl(p.ch).forEach(n=>R.push([...B,'Chœur',n]));p.mus.forEach(m=>R.push([...B,m.a,m.n]));nl(p.chants).forEach(c=>R.push([...B,'Chant',c]))}
+  else p.rows.forEach(m=>R.push([...B,m.a,m.n]));
+  camCSV(R,'programmation-'+camSlug(p.dep)+'-'+p.date+'.csv')}});
+$('nw').onclick=()=>{S.l.push(mk($('dep').value,$('dt').value));sv();render()};
+$('dep').onchange=render;
+render();
+window.camReload=()=>{try{const x=JSON.parse(localStorage.getItem(KEY));if(x&&x.l)S=x}catch(e){}render()};
+},null);
+
+/* ===== 5. ÉCRAN D'ENTRÉE : connexion, inscription, accueil, mon compte ===== */
+const $=i=>document.getElementById(i),IDLE=5*60*1000;
+const APPS=[
+ {id:'membres',nom:'Gestion des membres',desc:'Groupe musical CAM',ico:'🎵'},
+ {id:'eglises',nom:'Base de données CAM',desc:'Fiches, nouveaux et suivi',ico:'🗂️'},
+ {id:'cr',nom:'Compte rendu de culte',desc:'Rapports des départements',ico:'📋'},
+ {id:'prep',nom:'Préparation du culte',desc:'Programme, équipes et checklist',ico:'🗓️'},
+ {id:'prog',nom:'Programmation des départements',desc:'Louange, accueil, équipes du jour',ico:'📅'},
+ {id:'pres',nom:'Présence',desc:'QR, appel et pointage',ico:'✅'}];
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let T=null,mode='login',hiddenAt=0;
+const me=()=>CamStore.user;
+const show=v=>{['gate','home','acct','view'].forEach(x=>$(x).hidden=x!==v);window.scrollTo(0,0)};
+const allowed=()=>APPS.filter(a=>me().apps.includes(a.id));
+const clr=()=>document.querySelectorAll('.app').forEach(a=>{a.hidden=true});
+const leave=()=>CamStore.logout();
+
+/* Connexion et inscription (comptes gérés par le serveur) */
+function view(){
+ const cfg=CamStore.cfg;if(mode==='signup'&&!cfg.inscriptions)mode='login';
+ document.querySelectorAll('[data-s]').forEach(el=>el.hidden=!el.dataset.s.split(' ').includes(mode));
+ document.querySelectorAll('#seg button').forEach(b=>b.classList.toggle('on',b.dataset.m===mode));
+ document.querySelector('#seg [data-m=signup]').hidden=!cfg.inscriptions;
+ $('bk').hidden=true;$('fg').hidden=mode!=='login';
+ $('go').textContent=mode==='login'?'Se connecter':'Créer mon compte';
+ $('gt').textContent=mode==='login'?'Bon retour':'Créer un compte';
+ $('gs').textContent=mode==='login'?(cfg.inscriptions?'Connectez-vous pour accéder à vos applications.':'Les inscriptions sont fermées. Connectez-vous avec votre compte.'):(cfg.codeRequis?'Entrez le code d\'accès donné par l\'administrateur.':'Avec un code d\'accès, vous entrez tout de suite. Sans code, votre compte attend l\'activation par l\'administrateur.');
+ $('lcode').textContent=cfg.codeRequis?'Code d\'accès (obligatoire)':'Code d\'accès (facultatif)';
+ $('a_pw').autocomplete=mode==='login'?'current-password':'new-password'}
+function setM(m){mode=m;$('ge').textContent='';$('gm').textContent='';['a_pw','a_pw2','a_code'].forEach(i=>$(i).value='');$('a_pw').type=$('a_pw2').type='password';view()}
+function gate(){setM('login');show('gate');$('a_em').focus()}
+document.querySelectorAll('#seg button').forEach(b=>b.onclick=()=>setM(b.dataset.m));
+$('fg').onclick=()=>{$('ge').textContent='';$('gm').textContent='Mot de passe oublié : contactez l\'administrateur, il vous donnera un nouveau mot de passe.'};
+$('sh').onclick=()=>{const t=$('a_pw').type==='password'?'text':'password';$('a_pw').type=t;$('a_pw2').type=t};
+$('af').onsubmit=async ev=>{ev.preventDefault();
+ const e=m=>$('ge').textContent=m,em=$('a_em').value.trim().toLowerCase(),pw=$('a_pw').value;e('');$('gm').textContent='';
+ if(!/^\S+@\S+\.\S+$/.test(em))return e('Adresse e-mail invalide.');
+ $('go').disabled=true;
+ try{
+  if(mode==='signup'){
+   const nom=$('a_nom').value.trim(),code=$('a_code').value.trim();
+   if(!nom)return e('Indiquez votre nom.');
+   if(pw.length<8)return e('Mot de passe : 8 caractères minimum.');
+   if(pw!==$('a_pw2').value)return e('Les mots de passe sont différents.');
+   if(CamStore.cfg.codeRequis&&!code)return e('Le code d\'accès est obligatoire.');
+   const r=await CamStore.register({nom,email:em,password:pw,code});
+   if(r.status==='active')return location.reload();
+   setM('login');$('gm').textContent='Compte créé. Il sera utilisable dès que l\'administrateur l\'aura activé.';return}
+  await CamStore.login(em,pw);location.reload()
+ }catch(x){e(x.message||'Erreur. Réessayez.')}finally{$('go').disabled=false}};
+
+/* Accueil */
+function home(){clr();$('hi').textContent='Bonjour '+me().nom;
+ const l=allowed();
+ $('tiles').innerHTML=l.map(a=>`<button class="card tile" data-o="${a.id}"><span class="i">${a.ico}</span><b>${a.nom}</b><span class="mu">${a.desc}</span></button>`).join('')
+  +`<button class="card tile" data-code><span class="i">🔑</span><b>Ajouter un code d'accès</b><span class="mu">Débloquer une autre application</span></button>`
+  +`<button class="card tile" data-acct><span class="i">👤</span><b>Mon compte</b><span class="mu">Mot de passe et déconnexion</span></button>`
+  +(!l.length?'<p class="mu">Aucune application n\'est encore débloquée : ajoutez un code d\'accès, ou attendez l\'activation par l\'administrateur.</p>':'');
+ show('home');bump()}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-o],[data-code],[data-acct]');if(!b)return;
+ if(b.dataset.o){const a=allowed().find(x=>x.id===b.dataset.o);if(a)openApp(a)}
+ if('code' in b.dataset){$('cd_in').value='';$('cd_e').textContent='';$('codescr').hidden=false;$('cd_in').focus()}
+ if('acct' in b.dataset)acct()});
+$('vb').onclick=home;$('ab').onclick=home;$('lk').onclick=leave;$('ac_out').onclick=leave;
+function openApp(a){$('vt').textContent=a.nom;$('bar').hidden=false;clr();$('app-'+a.id).hidden=false;const c=CTRL[a.id];if(c){if(c.camReload)c.camReload();if(c.camOpen)c.camOpen()}show('view')}
+
+/* Ajouter un code d'accès */
+$('cd_go').onclick=async()=>{const e=m=>$('cd_e').textContent=m,c=$('cd_in').value.trim();e('');if(!c)return e('Entrez un code.');
+ $('cd_go').disabled=true;
+ try{await CamStore.addCode(c);location.reload()}catch(x){e(x.message||'Erreur. Réessayez.')}finally{$('cd_go').disabled=false}};
+$('cd_bk').onclick=()=>{$('codescr').hidden=true};
+$('cd_in').addEventListener('keydown',e=>{if(e.key==='Enter')$('cd_go').click()});
+
+/* Mon compte */
+function acct(){const u=me();$('ac_nm').textContent=u.nom;$('ac_em').textContent=u.email||'';
+ $('ac_ap').textContent=u.apps.length?'Applications : '+APPS.filter(a=>u.apps.includes(a.id)).map(a=>a.nom).join(', '):'Aucune application débloquée pour le moment.';
+ ['ac_o','ac_n','ac_n2'].forEach(i=>$(i).value='');$('ac_e').textContent=$('ac_m').textContent='';show('acct');bump()}
+$('ac_go').onclick=async()=>{const e=m=>$('ac_e').textContent=m,n=$('ac_n').value;e('');$('ac_m').textContent='';
+ if(n.length<8)return e('Nouveau mot de passe : 8 caractères minimum.');
+ if(n!==$('ac_n2').value)return e('Les mots de passe sont différents.');
+ $('ac_go').disabled=true;
+ try{await CamStore.changePassword($('ac_o').value,n);['ac_o','ac_n','ac_n2'].forEach(i=>$(i).value='');$('ac_m').textContent='Mot de passe modifié.'}
+ catch(x){e(x.message||'Erreur. Réessayez.')}finally{$('ac_go').disabled=false}};
+
+/* Déconnexion automatique après 5 minutes sans activité, ou si l'écran reste caché plus de 2 minutes */
+function bump(){clearTimeout(T);if(CamStore.user)T=setTimeout(leave,IDLE)}
+['click','keydown','touchstart'].forEach(v=>addEventListener(v,bump,{passive:true}));
+document.addEventListener('visibilitychange',()=>{if(!CamStore.user)return;if(document.hidden)hiddenAt=Date.now();else{if(hiddenAt&&Date.now()-hiddenAt>120000)leave();hiddenAt=0}});
+function openPublic(){$('bar').hidden=true;clr();$('app-pres').hidden=false;show('view')}
+if(!window.crypto||!crypto.subtle)document.body.innerHTML='<p style="padding:24px">Utilisez un navigateur à jour (Chrome, Safari ou Firefox) et une adresse en https.</p>';
+else if(location.hash.startsWith('#checkin='))openPublic();
+else if(CamStore.user)home();
+else gate();
+
+}
+CamStore.init().then(boot);
+})();
+
+</script>
+</body></html>
