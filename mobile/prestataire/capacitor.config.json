@@ -1,0 +1,14 @@
+{
+  "appId": "com.ouvrage.prestataire",
+  "appName": "Ouvrage Pro",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": false
+  },
+  "ios": {
+    "contentInset": "automatic"
+  }
+}

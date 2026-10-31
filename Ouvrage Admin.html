@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ouvrage — Administration</title>
+<style>
+:root{--bg:#0b0b0d;--side:#0f0f12;--card:#131316;--card2:#1b1b20;--ln:#24242b;--tx:#f4f4f6;--mu:#8e8e9a;--or:#ff6a13;--or2:#ff9a3d;--ok:#2ecc71;--ko:#ff4d4f;color-scheme:dark}
+*{box-sizing:border-box;margin:0}
+body{background:var(--bg);color:var(--tx);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;height:100vh;overflow:hidden}
+button,input{font:inherit}
+.app{display:grid;grid-template-columns:260px 1fr;height:100vh}
+aside{background:var(--side);border-right:1px solid var(--ln);display:flex;flex-direction:column;min-height:0}
+.brand{display:flex;gap:12px;align-items:center;padding:20px 18px;border-bottom:1px solid var(--ln)}
+.logo{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--or),#c24a05);display:grid;place-items:center;flex:none;box-shadow:0 10px 24px -10px #ff6a13aa}
+.brand small{display:block;color:var(--mu);font-size:10px;letter-spacing:1.2px;font-weight:700}
+.brand b{font-size:16px;letter-spacing:-.2px}
+nav.side{flex:1;overflow-y:auto;padding:8px 12px 16px}
+.grp{font-size:10.5px;letter-spacing:1.4px;color:#5d5d68;font-weight:700;margin:16px 10px 6px}
+.item{width:100%;display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;background:none;border:0;color:#b9b9c4;cursor:pointer;text-align:left;font-size:14px}
+.item:hover{background:var(--card2);color:var(--tx)}
+.item.on{background:#ff6a1520;color:var(--or);font-weight:600}
+.item i{width:22px;text-align:center;font-style:normal;font-size:16px}
+.item[hidden]{display:none}
+.me{border-top:1px solid var(--ln);padding:14px 16px;display:flex;align-items:center;gap:12px}
+.av{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--or),#b43c00);display:grid;place-items:center;font-weight:800;color:#fff;flex:none;font-size:13px}
+.me b{display:block}.me small{color:var(--mu);font-size:12px}
+main{display:flex;flex-direction:column;min-width:0;min-height:0;position:relative}
+.top{display:flex;align-items:center;gap:14px;padding:14px 28px;border-bottom:1px solid var(--ln);background:var(--side)}
+.crumb{color:var(--mu);font-size:14px;white-space:nowrap}.crumb b{color:var(--or);font-weight:600}
+.search{margin-left:auto;display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--ln);border-radius:12px;padding:0 12px;width:300px}
+.search input{background:none;border:0;color:var(--tx);padding:10px 0;width:100%;outline:0}
+.ibtn{width:40px;height:40px;border-radius:12px;background:var(--card);border:1px solid var(--ln);color:var(--tx);cursor:pointer;font-size:16px;display:grid;place-items:center;flex:none;position:relative}
+.menuBtn{display:none}
+.content{flex:1;overflow-y:auto;padding:24px 28px 40px}
+.head{display:flex;align-items:flex-start;gap:16px;margin-bottom:22px;flex-wrap:wrap}
+.head h1{font-size:26px;letter-spacing:-.5px}
+.head p{color:var(--mu);margin-top:4px}
+.sp{margin-left:auto;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.seg{display:flex;background:var(--card);border:1px solid var(--ln);border-radius:12px;padding:3px}
+.seg button{background:none;border:0;color:var(--mu);padding:8px 12px;border-radius:9px;cursor:pointer;font-weight:600}
+.seg button.on{background:var(--card2);color:var(--tx)}
+.btn{background:linear-gradient(135deg,var(--or),var(--or2));border:0;color:#fff;padding:10px 16px;border-radius:12px;font-weight:700;cursor:pointer;display:flex;gap:8px;align-items:center;box-shadow:0 10px 24px -12px #ff6a13aa}
+.btn.g{background:var(--card);border:1px solid var(--ln);color:var(--tx);box-shadow:none}
+.kpis,.fin{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:16px}
+.card{background:linear-gradient(180deg,#151518,#0e0e10);border:1px solid var(--ln);border-radius:18px;padding:18px;box-shadow:inset 0 1px 0 #ffffff08}
+.lbl{font-size:11.5px;letter-spacing:1px;color:var(--mu);font-weight:700;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center}
+.val{font-size:30px;font-weight:800;letter-spacing:-.6px;margin-top:12px}
+.val small{font-size:14px;color:var(--mu);font-weight:600;letter-spacing:0;margin-left:6px}
+.sub{color:var(--mu);font-size:12.5px;margin-top:14px;padding-top:12px;border-top:1px solid var(--ln)}
+.two{display:grid;grid-template-columns:1.6fr 1fr;gap:16px;margin-bottom:16px}
+.sec{display:flex;justify-content:space-between;align-items:center;margin:8px 0 12px}
+.sec h2{font-size:15px;letter-spacing:-.2px}
+.chart{width:100%;height:240px;margin-top:14px}
+.empty{display:grid;place-items:center;text-align:center;color:var(--mu);border:1px dashed var(--ln);border-radius:14px;padding:24px;min-height:120px}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{color:var(--mu);font-weight:600;text-align:left;padding:10px 12px;border-bottom:1px solid var(--ln);font-size:11px;letter-spacing:.6px;text-transform:uppercase}
+.tbl td{padding:12px;border-bottom:1px solid var(--ln)}
+.tag{font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;background:var(--card2);white-space:nowrap}
+.placeholder ul{color:var(--mu);margin:10px 0 0 18px;line-height:1.8}
+.np{position:absolute;right:28px;top:66px;width:320px;background:var(--card2);border:1px solid var(--ln);border-radius:16px;padding:16px;box-shadow:0 30px 60px -20px #000;z-index:30;display:none}
+.np.open{display:block}
+.toast{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);background:var(--tx);color:var(--bg);padding:10px 16px;border-radius:99px;font-weight:600;font-size:13px;z-index:40;box-shadow:0 10px 30px -8px #000;white-space:nowrap}
+.scrim{display:none;position:fixed;inset:0;background:#000a;z-index:15}
+.scrim.open{display:block}
+.t-or{background:#ff6a1322;color:var(--or)}.t-bl{background:#3b82f622;color:#3b82f6}.t-ok{background:#2ecc7122;color:var(--ok)}.t-ko{background:#ff4d4f22;color:var(--ko)}
+.fld{width:100%;background:#121215;border:1px solid var(--ln);color:var(--tx);border-radius:12px;padding:11px;margin:4px 0 14px;font-size:14px}
+.fld:focus{outline:0;border-color:var(--or);box-shadow:0 0 0 3px #ff6a1330}
+label.l{font-size:12px;color:var(--mu);display:block}
+.sw2{width:50px;height:28px;border-radius:99px;background:var(--card2);border:0;position:relative;cursor:pointer;flex:none}.sw2::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:.2s}.sw2.on{background:var(--ok)}.sw2.on::after{left:25px}
+.dlg{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(560px,92vw);max-height:86vh;overflow:auto;background:var(--card2);border:1px solid var(--ln);border-radius:18px;padding:22px;z-index:40;box-shadow:0 30px 60px -20px #000}
+.kv3{display:flex;justify-content:space-between;gap:16px;padding:9px 0;border-bottom:1px solid var(--ln);font-size:13.5px}.kv3 span{color:var(--mu)}.kv3 b{text-align:right}
+.locked .app{grid-template-columns:1fr}
+.locked aside,.locked .top,.locked .np,.locked .menuBtn{display:none!important}
+.login{max-width:380px;margin:8vh auto;padding:26px}
+.login .logo{margin:0 auto 14px}
+.info{border:1px solid var(--ok);color:#b6f0cc;border-radius:12px;padding:10px 12px;margin-bottom:12px;background:#2ecc7114}
+.alert{border:1px solid var(--ko);color:#ffb4b5;border-radius:12px;padding:10px 12px;margin-bottom:12px;background:#ff4d4f14}
+:focus-visible{outline:2px solid var(--or);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media(max-width:1200px){.kpis,.fin{grid-template-columns:repeat(2,1fr)}.two{grid-template-columns:1fr}}
+@media(max-width:820px){
+ .app{grid-template-columns:1fr}
+ aside{position:fixed;inset:0 auto 0 0;width:260px;transform:translateX(-100%);transition:transform .25s;z-index:20}
+ aside.open{transform:none}
+ .menuBtn{display:grid}
+ .search{display:none}
+ .kpis,.fin{grid-template-columns:1fr}
+ .content{padding:18px 16px 32px}
+ .top{padding:12px 16px}
+ .np{right:16px;left:16px;width:auto}
+}
+</style></head>
+<body>
+<div class="app">
+ <aside id="side" aria-label="Navigation administrateur">
+  <div class="brand"><div class="logo" aria-hidden="true"><svg viewBox="0 0 48 48" width="24" height="24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M8 22 24 9l16 13"/><path d="M13 20v18h22V20"/><path d="M20 38v-9h8v9"/></svg></div><div><small>ADMINISTRATION</small><b>Ouvrage</b></div></div>
+  <div style="padding:10px 12px 0"><div class="search" style="width:100%;margin:0"><input id="q" aria-label="Rechercher une rubrique" placeholder="Rechercher une rubrique…" oninput="filt(this.value)"></div></div>
+  <nav class="side" id="nav"></nav>
+  <div class="me"><div class="av" aria-hidden="true">OA</div><div><b>Administrateur</b><small>Ouvrage</small></div><button class="ibtn" style="margin-left:auto" aria-label="Se déconnecter" title="Se déconnecter" onclick="logout()">⏻</button></div>
+ </aside>
+ <div class="scrim" id="scrim" onclick="toggleSide(false)"></div>
+ <main>
+  <header class="top">
+   <button class="ibtn menuBtn" aria-label="Ouvrir le menu" onclick="toggleSide(true)">☰</button>
+   <div class="crumb" id="crumb"></div>
+   <div class="search"><span aria-hidden="true">🔍</span><input aria-label="Recherche globale" placeholder="Rechercher une rubrique…" oninput="$('#q').value=this.value;filt(this.value)"></div>
+   <button class="ibtn" aria-label="Notifications" aria-expanded="false" id="bell" onclick="notifsT()">🔔</button>
+  </header>
+  <div class="np" id="np" role="dialog" aria-label="Notifications"><b>Notifications</b><p class="sub" style="margin-top:10px;border:0;padding:0">Aucune notification pour le moment.</p></div>
+  <div class="content" id="content"></div>
+ </main>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+<script>
+/* Rubriques du menu (ordre du cahier des charges) */
+const GROUPS=[
+ ['Menu principal',[['dash','Tableau de bord','📊'],['req','Demandes clients','📥'],['dist','Distribution automatique','🔀']]],
+ ['Prestataires',[['pros','Prestataires','🛠️'],['valid','Validation des prestataires','🪪']]],
+ ['Clients',[['cli','Clients','👥'],['sup','Support clients','💬']]],
+ ['Missions et devis',[['res','Réservations et missions','📅'],['devis','Devis','🧾']]],
+ ['Finances et litiges',[['fin','Finances et transactions','💳'],['com','Commissions','💰'],['ret','Retraits','🏦'],['lit','Litiges','⚖️']]],
+ ['Rapports',[['rap','Rapports','📈'],['set','Paramètres','⚙️']]]
+];
+/* Rubriques non encore construites : étape du plan de travail */
+const PAGES={
+ valid:{step:3,title:'Validation des prestataires',desc:'Contrôle des pièces (carte d\'identité, extrait de naissance) avant visibilité.',items:['Dossiers en attente','Validation, refus ou demande de complément']},
+ set:{step:null,title:'Paramètres',desc:'Réglages de l\'administration.',items:['Compte administrateur','Droits d\'accès par rôle']}
+};
+let P='dash',Q='';
+const $=s=>document.querySelector(s);
+const money=m=>new Intl.NumberFormat('fr-FR').format(Math.round(m)).replace(/\s/g,' ')+' FCFA';
+const MOIS=['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Août','Sep','Oct','Nov','Déc'];
+
+function renderNav(){
+ const q=Q.toLowerCase();
+ $('#nav').innerHTML=GROUPS.map(([g,items])=>`<div class="grp">${g.toUpperCase()}</div>`+items.map(([k,t,ic])=>`<button class="item ${P==k?'on':''}" ${t.toLowerCase().includes(q)?'':'hidden'} ${P==k?'aria-current="page"':''} onclick="go('${k}')"><i aria-hidden="true">${ic}</i>${t}</button>`).join('')).join('');
+}
+function filt(v){Q=v;renderNav()}
+function toggleSide(o){$('#side').classList.toggle('open',o);$('#scrim').classList.toggle('open',o)}
+function notifsT(){const n=$('#np'),o=!n.classList.contains('open');n.classList.toggle('open',o);$('#bell').setAttribute('aria-expanded',o)}
+function toast(t){const e=$('#toast');e.textContent=t;e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>e.hidden=true,2200)}
+function go(k){P=k;PK='tous';PQ='';renderNav();toggleSide(false);$('#np').classList.remove('open');render()}
+
+function render(){
+ if(P=='sup')return renderSupport();
+ if(P=='req'||P=='dist')return renderOps();
+ if(P=='ret')return renderRet();
+ if(P=='lit')return renderLit();
+ if(P=='rap')return renderRap();
+ if(P=='fin'||P=='com')return renderFin(P);
+ if(P=='res'||P=='devis')return renderMissions(P);
+ if(P=='pros'||P=='cli')return renderPeople(P);
+ if(P=='valid')return renderValid();
+ if(P=='set')return renderSettings();
+ const c=$('#content');
+ if(P=='dash'){
+  $('#crumb').innerHTML='Tableau de bord › <b>Vue générale</b>';
+  const today=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  c.innerHTML=`
+  <div class="head"><div><h1>Bienvenue, Administrateur</h1><p>${today}</p></div>
+   <div class="sp"><div class="seg" role="group" aria-label="Période">${['Journalier','Hebdo','Mensuel','Annuel'].map((x,i)=>`<button class="${i==2?'on':''}" aria-pressed="${i==2}" onclick="period(this)">${x}</button>`).join('')}</div>
+   <button class="btn g" onclick="exportCsv()">⬇ Exporter CSV</button></div></div>
+  <div class="kpis">
+   ${kpi('Clients inscrits',DB.clients.length,'')}${kpi('Prestataires actifs',DB.pros.filter(p=>p.verified).length,'')}${kpi('Demandes reçues',DB.reqs.length,'')}${kpi('Missions terminées',DB.missions.filter(m=>m.st=='terminee').length,'')}
+  </div>
+  <div class="sec"><h2>Suivi financier</h2></div>
+  <div class="fin">
+   ${kpi('Total payé par les clients',fmt(totaux().paye),'FCFA')}${kpi('Commissions Ouvrage',fmt(totaux().commissions),'FCFA')}${kpi('Sommes dues aux pros',fmt(totaux().dues),'FCFA')}${kpi('Versements effectués',fmt(totaux().verses),'FCFA')}
+  </div>
+  <div class="two">
+   <div class="card"><div class="lbl"><span>Tendance des ventes</span><span>Mensuel</span></div><div class="val">${money(0)}</div><div class="sub" style="margin-top:6px;border:0;padding:0">Chiffre d'affaires de l'année</div>${trendSvg()}</div>
+   <div class="card"><div class="lbl"><span>Répartition du chiffre d'affaires</span></div><div style="display:grid;place-items:center;margin:18px 0 6px"><svg viewBox="0 0 160 160" width="170" height="170" aria-hidden="true"><circle cx="80" cy="80" r="62" fill="none" stroke="#24242b" stroke-width="18"/><text x="80" y="78" text-anchor="middle" fill="#f4f4f6" font-size="15" font-weight="800">0 FCFA</text><text x="80" y="98" text-anchor="middle" fill="#8e8e9a" font-size="11">par catégorie</text></svg></div><div class="empty" style="min-height:70px">Aucune prestation payée pour le moment.</div></div>
+  </div>
+  <div class="sec"><h2>Transactions récentes</h2></div>
+  <div class="card" style="padding:0;overflow:hidden"><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>ID</th><th>Client</th><th>Prestataire</th><th>Service</th><th>Statut</th><th>Montant</th><th>Commission</th></tr></thead><tbody>${txRows()}</tbody></table></div></div>`;
+ } else {
+  const p=PAGES[P];
+  $('#crumb').innerHTML=`Tableau de bord › <b>${p.title}</b>`;
+  c.innerHTML=`<div class="head"><div><h1>${p.title}</h1><p>${p.desc}</p></div></div>
+  <div class="card placeholder"><div class="lbl"><span>${p.step?'Étape '+p.step+' du plan de travail':'À préciser'}</span></div><div class="empty" style="margin-top:14px;min-height:160px"><div><b style="color:var(--tx);font-size:15px">Section à construire</b><ul style="text-align:left">${p.items.map(i=>`<li>${i}</li>`).join('')}</ul></div></div></div>`;
+ }
+}
+function txRows(){const L=DB.missions.filter(m=>estPaye(m)||m.remboursement).sort((a,b)=>b.createdAt-a.createdAt).slice(0,8);
+ return L.map(m=>`<tr><td>${esc(m.ref)}</td><td>${esc(m.client)}</td><td>${esc(m.pro)}</td><td>${esc(m.trade)}</td><td><span class="tag ${statutFin(m)[1]}">${statutFin(m)[0]}</span></td><td>${fmt(m.price||0)} FCFA</td><td>${fmt(comm(m))} FCFA</td></tr>`).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--mu);padding:30px">Aucune transaction pour le moment.</td></tr>'}
+function kpi(l,v,u){return `<div class="card"><div class="lbl"><span>${l}</span></div><div class="val">${v}${u?`<small>${u}</small>`:''}</div><div class="sub">${v==0?'Aucune donnée pour le moment':''}</div></div>`}
+function trendSvg(){
+ const W=600,H=240,B=200,T=20;let g='';
+ for(let i=0;i<=4;i++){const y=T+(B-T)*i/4;g+=`<line x1="40" x2="${W}" y1="${y}" y2="${y}" stroke="#24242b" stroke-dasharray="3 4"/><text x="32" y="${y+4}" fill="#5d5d68" font-size="11" text-anchor="end">${i==4?'0':''}</text>`}
+ MOIS.forEach((m,i)=>{const x=40+i*((W-40)/12)+ (W-40)/24;g+=`<text x="${x}" y="${H-12}" fill="#5d5d68" font-size="11" text-anchor="middle">${m}</text>`});
+ return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Tendance des ventes : aucune donnée">${g}</svg><div class="empty" style="min-height:0;margin-top:8px;padding:10px;border:0">Aucune vente enregistrée pour le moment.</div>`;
+}
+function period(b){b.parentNode.querySelectorAll('button').forEach(x=>{x.classList.toggle('on',x===b);x.setAttribute('aria-pressed',x===b)})}
+function exportCsv(){toast('Aucune donnée à exporter')}
+
+/* ---------- Paramètres : compte de l'administrateur connecté ---------- */
+function renderSettings(){
+ $('#crumb').innerHTML='Tableau de bord › <b>Paramètres</b>';
+ $('#content').innerHTML=`<div class="head"><div><h1>Paramètres</h1><p>Votre compte d'administrateur. Chaque changement déconnecte toutes vos sessions.</p></div></div>
+ <div class="two"><div class="card"><div class="lbl"><span>Mot de passe</span></div>
+  <label class="l" for="sp-c" style="margin-top:12px">Mot de passe actuel</label><input class="fld" id="sp-c" type="password" autocomplete="current-password">
+  <label class="l" for="sp-n">Nouveau mot de passe (12 caractères minimum)</label><input class="fld" id="sp-n" type="password" autocomplete="new-password">
+  <label class="l" for="sp-n2">Confirmer le nouveau mot de passe</label><input class="fld" id="sp-n2" type="password" autocomplete="new-password">
+  <button class="btn" onclick="changePwd()">Changer le mot de passe</button></div>
+ <div class="card"><div class="lbl"><span>Double authentification</span></div>
+  <p class="sub" style="border:0;padding:12px 0 0">Un nouveau secret remplace l'ancien : votre application d'authentification doit être reconfigurée avec le lien affiché.</p>
+  <label class="l" for="sp-p2" style="margin-top:12px">Mot de passe actuel</label><input class="fld" id="sp-p2" type="password" autocomplete="current-password">
+  <label class="l" for="sp-t">Code actuel à 6 chiffres</label><input class="fld" id="sp-t" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code">
+  <button class="btn g" onclick="resetTotp()">Réinitialiser le code</button></div></div>
+ <div class="card"><div class="lbl"><span>Droits d'accès par rôle</span></div><p class="sub" style="border:0;padding:12px 0 0">Un seul rôle d'administration existe pour l'instant. Les droits par rôle seront ajoutés plus tard.</p></div>`;
+}
+async function changePwd(){const c=$('#sp-c').value,n=$('#sp-n').value,n2=$('#sp-n2').value;
+ if(n.length<12)return toast('Le nouveau mot de passe doit faire 12 caractères minimum');
+ if(n!==n2)return toast('Les deux mots de passe ne sont pas identiques');
+ try{await api('/admin/account/password','POST',{currentPassword:c,newPassword:n});toast('Mot de passe modifié, reconnexion requise');logout()}catch(e){toast(e.message)}}
+async function resetTotp(){const p=$('#sp-p2').value,t=$('#sp-t').value.trim();
+ if(!p||!/^\d{6}$/.test(t))return toast('Mot de passe et code à 6 chiffres requis');
+ try{const d=await api('/admin/account/totp/reset','POST',{password:p,totp:t});
+  dlg(`<b style="font-size:17px">Nouveau code de double authentification</b><p class="mu" style="margin:8px 0 12px">Ajoutez ce compte dans votre application d'authentification. Ce lien n'est affiché qu'une fois.</p><textarea class="fld" rows="3" readonly aria-label="Lien otpauth">${esc(d.otpauthUri)}</textarea><button class="btn" onclick="closeDlg();logout()">Enregistré, me reconnecter</button>`)}
+ catch(e){toast(e.message)}}
+
+/* ---------- Étape 2 : demandes clients et distribution automatique ---------- */
+// Données réelles fournies par le backend (non branché pour l'instant : listes vides)
+const DB={reqs:[],pros:[],clients:[],missions:[],rates:{},retraits:[],litiges:[],support:[],journal:[]};
+const ST2={nouvelle:['Nouvelle','t-or'],distribuee:['Distribuée','t-bl'],acceptee:['Acceptée','t-ok'],refusee:['Refusée','t-ko'],expiree:['Expirée','t-ko'],annulee:['Annulée','t-ko']};
+let RF='toutes';
+const RULES=Object.assign({on:true,n:3,delay:10},JSON.parse(localStorage.getItem('ouv-admin-rules')||'{}'));
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const cnt=s=>DB.reqs.filter(r=>r.st==s).length;
+const saveRules=()=>localStorage.setItem('ouv-admin-rules',JSON.stringify(RULES));
+// Prestataires éligibles : vérifiés, disponibles, bon métier, bonne zone, classés par note
+const candidats=r=>DB.pros.filter(p=>p.verified&&!p.suspended&&p.dispo&&p.trades.includes(r.trade)&&p.zones.includes(r.zone)).sort((a,b)=>b.note-a.note);
+async function distribuer(id){try{const d=await api(`/admin/requests/${id}/distribute`,'POST');closeDlg();toast(`Demande envoyée à ${d.sent} prestataire(s)`);await loadAdmin();renderOps()}catch(e){toast(e.message)}}
+// Sans réponse dans le délai : envoi au groupe suivant, sinon la demande expire
+function annuler(id){askMotif('Annuler la demande','Motif (3 caractères minimum)',async m=>{await api(`/admin/requests/${id}/cancel`,'POST',{motif:m});closeDlg();toast('Demande annulée');await loadAdmin();renderOps()})}
+function dlg(h){closeDlg();const s=document.createElement('div');s.className='scrim open';s.id='dscrim';s.onclick=closeDlg;const d=document.createElement('div');d.className='dlg';d.id='dlg';d.setAttribute('role','dialog');d.setAttribute('aria-modal','true');d.innerHTML=h;document.body.append(s,d)}
+function closeDlg(){['#dlg','#dscrim'].forEach(x=>{const e=$(x);e&&e.remove()})}
+function openReq(id){const r=DB.reqs.find(x=>x.id==id);if(!r)return;
+ const sent=(r.sent||[]).map(pid=>DB.pros.find(p=>p.id==pid)).filter(Boolean);
+ const act=r.st=='nouvelle'?`<button class="btn" onclick="distribuer('${r.id}')">Distribuer maintenant</button>`:'';
+ const can=['nouvelle','distribuee'].includes(r.st)?`<button class="btn g" onclick="annuler('${r.id}')">Annuler la demande</button>`:'';
+ dlg(`<div class="row sp" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><b style="font-size:17px">Demande ${esc(r.ref)}</b><button class="ibtn" aria-label="Fermer" onclick="closeDlg()">✕</button></div>
+ ${[['Client',r.client],['Métier',r.trade],['Zone',r.zone],['Adresse',r.addr],['Date souhaitée',r.date],['Type',r.mode=='devis'?'Demande de devis':'Réservation immédiate'],['Montant indicatif',r.price?money(r.price):'—'],['Statut',ST2[r.st][0]],['Prestataires notifiés',sent.length?sent.map(p=>esc(p.name)).join(', '):'Aucun pour le moment'],['Prestataires éligibles',candidats(r).length]].map(x=>`<div class="kv3"><span>${x[0]}</span><b>${esc(x[1])}</b></div>`).join('')}
+ <p class="sub" style="border:0;padding:12px 0 0">${esc(r.desc)}</p>
+ <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">${can}${act}</div>`)}
+function renderOps(){
+ const c=$('#content');
+ if(P=='req'){
+  $('#crumb').innerHTML='Tableau de bord › <b>Demandes clients</b>';
+  const tabs=[['toutes','Toutes',DB.reqs.length],['nouvelle','Nouvelles',cnt('nouvelle')],['distribuee','Distribuées',cnt('distribuee')],['acceptee','Acceptées',cnt('acceptee')],['refusee','Refusées',cnt('refusee')],['expiree','Expirées',cnt('expiree')]];
+  const L=DB.reqs.filter(r=>RF=='toutes'||r.st==RF).sort((a,b)=>b.createdAt-a.createdAt);
+  c.innerHTML=`<div class="head"><div><h1>Demandes clients</h1><p>Demandes reçues des clients, à répartir entre les prestataires.</p></div></div>
+  <div class="kpis" style="grid-template-columns:repeat(3,1fr)">${kpi('Nouvelles',cnt('nouvelle'),'')}${kpi('Distribuées',cnt('distribuee'),'')}${kpi('Acceptées',cnt('acceptee'),'')}</div>
+  <div class="seg" role="tablist" style="display:inline-flex;flex-wrap:wrap;margin-bottom:14px">${tabs.map(t=>`<button role="tab" aria-selected="${RF==t[0]}" class="${RF==t[0]?'on':''}" onclick="RF='${t[0]}';renderOps()">${t[1]} <span style="color:var(--mu)">${t[2]}</span></button>`).join('')}</div>
+  <div class="card" style="padding:0;overflow:hidden"><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Réf.</th><th>Client</th><th>Métier</th><th>Zone</th><th>Date souhaitée</th><th>Type</th><th>Statut</th><th></th></tr></thead><tbody>${L.map(r=>`<tr><td>${esc(r.ref)}</td><td>${esc(r.client)}</td><td>${esc(r.trade)}</td><td>${esc(r.zone)}</td><td>${esc(r.date)}</td><td>${r.mode=='devis'?'Devis':'Immédiat'}</td><td><span class="tag ${ST2[r.st][1]}">${ST2[r.st][0]}</span></td><td><button class="btn g" style="padding:7px 12px" onclick="openReq('${r.id}')">Détail</button></td></tr>`).join('')||'<tr><td colspan="8" style="text-align:center;color:var(--mu);padding:30px">Aucune demande pour le moment.</td></tr>'}</tbody></table></div></div>`;
+ } else {
+  $('#crumb').innerHTML='Tableau de bord › <b>Distribution automatique</b>';
+  const file=DB.reqs.filter(r=>r.st=='nouvelle');
+  c.innerHTML=`<div class="head"><div><h1>Distribution automatique</h1><p>Règles d'envoi des demandes aux prestataires vérifiés et disponibles.</p></div></div>
+  <div class="two"><div class="card"><div class="lbl"><span>Règles</span></div>
+   <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;margin:14px 0 18px"><div><b>Distribution automatique</b><div class="sub" style="border:0;padding:0;margin-top:2px">Envoie les nouvelles demandes sans intervention.</div></div><button class="sw2 ${RULES.on?'on':''}" role="switch" aria-label="Distribution automatique" aria-checked="${RULES.on}" onclick="RULES.on=!RULES.on;saveRules();renderOps()"></button></div>
+   <label class="l" for="rn">Nombre de prestataires notifiés par demande (1 à 10)</label><input class="fld" id="rn" type="number" min="1" max="10" value="${RULES.n}">
+   <label class="l" for="rd">Délai de réponse avant le groupe suivant, en minutes (1 à 120)</label><input class="fld" id="rd" type="number" min="1" max="120" value="${RULES.delay}">
+   <p class="sub" style="border:0;padding:0">Priorité : note du prestataire. <b>Règles enregistrées sur ce poste seulement : le serveur utilise encore sa taille de distribution par défaut.</b> Reçoivent la demande seulement les prestataires vérifiés, disponibles, du bon métier et de la bonne zone.</p>
+   <button class="btn" style="margin-top:14px" onclick="saveRulesForm()">Enregistrer les règles</button></div>
+  <div class="card"><div class="lbl"><span>File d'attente</span><span>${file.length}</span></div><div style="margin-top:12px">${file.map(r=>`<div class="kv3" style="align-items:center"><div><b>${esc(r.ref)}</b> · ${esc(r.trade)}<div class="mu" style="color:var(--mu);font-size:12px">${esc(r.zone)} · ${esc(r.date)}</div></div><button class="btn" style="padding:7px 12px" onclick="distribuer('${r.id}')">Distribuer</button></div>`).join('')||'<div class="empty" style="min-height:120px">Aucune demande en attente de distribution.</div>'}</div></div></div>`;
+ }
+}
+function saveRulesForm(){const n=+$('#rn').value,d=+$('#rd').value;if(!(n>=1&&n<=10))return toast('Entre 1 et 10 prestataires');if(!(d>=1&&d<=120))return toast('Délai entre 1 et 120 minutes');RULES.n=Math.round(n);RULES.delay=Math.round(d);saveRules();toast('Règles enregistrées');renderOps()}
+/* ---------- Étape 3 : validation des prestataires ---------- */
+const VST={attente:['En attente','t-or'],complement:['Complément demandé','t-bl'],valide:['Validé','t-ok'],refuse:['Refusé','t-ko']};
+const VLABEL={valide:'Profil validé',refuse:'Dossier refusé',complement:'Complément demandé',attente:'Remis en attente'};
+let RV2='attente';
+const stOf=p=>p.status||'attente';
+const nbStat=s=>DB.pros.filter(p=>stOf(p)==s).length;
+// Décision de l'administrateur : pièces obligatoires avant validation, motif avant refus ou complément
+async function decider(id,st,motif){try{await api(`/admin/pros/${id}/decision`,'POST',{decision:st,motif:motif||undefined});closeDlg();toast('Décision enregistrée');await loadAdmin();renderValid()}catch(e){toast(e.message)}}
+async function openPro(id){const p=DB.pros.find(x=>x.id==id);if(!p)return;
+ try{const d=await api('/admin/pros/'+id);const have=new Set(d.documents.map(x=>x.kind));p.docs={cni:have.has('cni'),naiss:have.has('naiss'),diplome:have.has('diplome')};p.zones=d.zones;p.bio=d.bio}catch(e){return toast(e.message)}
+ const doc=(k,l,req)=>{const ok=p.docs[k];return `<div class="kv3"><span>${l}${req?'':' (facultatif)'}</span><span style="display:flex;gap:10px;align-items:center"><b style="color:${ok?'var(--ok)':'var(--mu)'}">${ok?'✔ Reçu':'Non fourni'}</b>${ok?`<button class="btn g" style="padding:6px 10px" onclick="openDoc('${p.id}','${k}')">Voir</button>`:''}</span></div>`};
+ dlg(`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><b style="font-size:17px">${esc(p.name)}</b><button class="ibtn" aria-label="Fermer" onclick="closeDlg()">✕</button></div>
+ <div class="kv3"><span>Métiers</span><b>${esc(p.trades.join(', '))}</b></div>
+ <div class="kv3"><span>Zones</span><b>${esc((p.zones||[]).join(', '))}</b></div>
+ <div class="kv3"><span>Statut</span><b><span class="tag ${VST[stOf(p)][1]}">${VST[stOf(p)][0]}</span></b></div>
+ <div class="lbl" style="margin:16px 0 4px"><span>Pièces</span></div>
+ ${doc('cni',"Carte d'identité",1)}${doc('naiss','Extrait de naissance',1)}${doc('diplome','Justificatif professionnel',0)}
+ <p class="sub" style="border:0;padding:10px 0 0">Chaque ouverture d'une pièce est journalisée.</p>
+ <label class="l" for="mo" style="margin-top:12px">Motif ou message au prestataire (obligatoire pour refuser ou demander un complément)</label>
+ <textarea class="fld" id="mo" rows="3"></textarea>
+ <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px"><button class="btn g" onclick="decider('${p.id}','refuse',$('#mo').value.trim())">Refuser</button><button class="btn g" onclick="decider('${p.id}','complement',$('#mo').value.trim())">Demander un complément</button><button class="btn" onclick="decider('${p.id}','valide','')">Valider le profil</button></div>`)}
+async function openDoc(id,kind){const w=window.open('about:blank','_blank');
+ try{let r=await fetch(API+`/admin/pros/${id}/documents/${kind}`,{headers:{Authorization:'Bearer '+TOK},credentials:'same-origin'});
+  if(r.status===401&&await renew())r=await fetch(API+`/admin/pros/${id}/documents/${kind}`,{headers:{Authorization:'Bearer '+TOK},credentials:'same-origin'});
+  if(!r.ok){const d=await r.json().catch(()=>null);throw new Error(msgOf(d))}
+  const url=URL.createObjectURL(await r.blob());if(w)w.location=url;else toast('Autorisez les fenêtres pour ouvrir la pièce')}
+ catch(e){if(w)w.close();toast(e.message)}}
+function renderValid(){
+ $('#crumb').innerHTML='Tableau de bord › <b>Validation des prestataires</b>';
+ const tabs=[['attente','En attente'],['complement','Complément demandé'],['valide','Validés'],['refuse','Refusés']];
+ const L=DB.pros.filter(p=>stOf(p)==RV2).sort((a,b)=>(a.submittedAt||0)-(b.submittedAt||0));
+ const pieces=p=>[p.docs&&p.docs.cni,p.docs&&p.docs.naiss].filter(Boolean).length;
+ $('#content').innerHTML=`<div class="head"><div><h1>Validation des prestataires</h1><p>Vérifiez les pièces avant de rendre un profil visible aux clients.</p></div></div>
+ <div class="kpis" style="grid-template-columns:repeat(3,1fr)">${kpi('En attente',nbStat('attente'),'')}${kpi('Validés',nbStat('valide'),'')}${kpi('Refusés',nbStat('refuse'),'')}</div>
+ <div class="seg" role="tablist" style="display:inline-flex;flex-wrap:wrap;margin-bottom:14px">${tabs.map(t=>`<button role="tab" aria-selected="${RV2==t[0]}" class="${RV2==t[0]?'on':''}" onclick="RV2='${t[0]}';renderValid()">${t[1]} <span style="color:var(--mu)">${nbStat(t[0])}</span></button>`).join('')}</div>
+ <div class="card" style="padding:0;overflow:hidden"><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Prestataire</th><th>Métiers</th><th>Zone</th><th>Pièces obligatoires</th><th>Statut</th><th></th></tr></thead><tbody>${L.map(p=>`<tr><td>${esc(p.name)}</td><td>${esc(p.trades.join(', '))}</td><td>${esc(p.zones.join(', '))}</td><td>${pieces(p)}/2</td><td><span class="tag ${VST[stOf(p)][1]}">${VST[stOf(p)][0]}</span></td><td><button class="btn g" style="padding:7px 12px" onclick="openPro('${p.id}')">Examiner</button></td></tr>`).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--mu);padding:30px">Aucun prestataire dans cette liste.</td></tr>'}</tbody></table></div></div>
+ <div class="sec"><h2>Historique des décisions</h2></div>
+ <div class="card">${DB.journal.slice(0,20).map(j=>`<div class="kv3"><div><b>${esc(j.action)}</b> · ${esc(j.pro)}${j.motif?`<div style="color:var(--mu);font-size:12.5px">${esc(j.motif)}</div>`:''}</div><span style="color:var(--mu);font-size:12px;white-space:nowrap">${esc(j.when)}</span></div>`).join('')||'<div class="empty" style="min-height:90px">Aucune décision pour le moment.</div>'}</div>`}
+/* ---------- Étape 4 : gestion des clients et des prestataires ---------- */
+let PK='tous',PQ='';
+const isPro=k=>k=='pros';
+const listeOf=k=>isPro(k)?DB.pros:DB.clients;
+const estActif=(k,x)=>isPro(k)?(x.verified&&!x.suspended):!x.suspended;
+const etat=(k,x)=>x.suspended?['Suspendu','t-ko']:(estActif(k,x)?['Actif','t-ok']:['En attente','t-or']);
+async function suspendre(k,id,motif){try{await api(`/admin/users/${id}/suspend`,'POST',{motif});closeDlg();toast('Compte suspendu');await loadAdmin();renderPeople(k)}catch(e){toast(e.message)}}
+async function reactiver(k,id){try{await api(`/admin/users/${id}/reactivate`,'POST');closeDlg();toast('Compte réactivé');await loadAdmin();renderPeople(k)}catch(e){toast(e.message)}}
+function ouvrirCompte(k,id){const x=listeOf(k).find(y=>y.id==id);if(!x)return;
+ const missions=isPro(k)?DB.reqs.filter(r=>(r.sent||[]).includes(x.id)).length:DB.reqs.filter(r=>r.client==x.name).length;
+ const lignes=isPro(k)
+  ?[['Métiers',x.trades.join(', ')],['Zones',x.zones.join(', ')],['Note',x.note?x.note.toFixed(1)+' / 5':'Aucun avis'],['Demandes reçues',missions]]
+  :[['Contact',x.contact],['Ville',x.city],['Zone',x.zone||'—'],['Demandes',missions]];
+ dlg(`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><b style="font-size:17px">${esc(x.name)}</b><button class="ibtn" aria-label="Fermer" onclick="closeDlg()">✕</button></div>
+ <div class="kv3"><span>Statut</span><b><span class="tag ${etat(k,x)[1]}">${etat(k,x)[0]}</span></b></div>
+ ${lignes.map(l=>`<div class="kv3"><span>${l[0]}</span><b>${esc(l[1])}</b></div>`).join('')}
+ ${x.suspended?`<p class="sub" style="border:0;padding:12px 0 0">Motif de suspension : ${esc(x.motif||'—')}</p><div style="margin-top:16px"><button class="btn" onclick="reactiver('${k}','${x.id}')">Réactiver le compte</button></div>`
+  :`<label class="l" for="sm" style="margin-top:14px">Motif de suspension (obligatoire)</label><textarea class="fld" id="sm" rows="3"></textarea><div style="margin-top:6px"><button class="btn" style="background:var(--ko)" onclick="suspendre('${k}','${x.id}',$('#sm').value.trim())">Suspendre le compte</button></div>`}`)}
+function tablePeople(k){
+ const q=PQ.toLowerCase();
+ const L=listeOf(k).filter(x=>(PK=='tous'||(PK=='actifs'&&estActif(k,x)&&!x.suspended)||(PK=='suspendus'&&x.suspended))&&[x.name,x.city||'',x.zone||'',(x.zones||[]).join(' '),(x.trades||[]).join(' ')].join(' ').toLowerCase().includes(q));
+ const entete=isPro(k)?'<th>Prestataire</th><th>Métiers</th><th>Zone</th><th>Note</th><th>Statut</th><th></th>':'<th>Client</th><th>Contact</th><th>Ville</th><th>Inscrit le</th><th>Statut</th><th></th>';
+ const ligne=x=>isPro(k)
+  ?`<td>${esc(x.name)}</td><td>${esc((x.trades||[]).join(', '))}</td><td>${esc((x.zones||[]).join(', '))}</td><td>${x.note?x.note.toFixed(1):'—'}</td>`
+  :`<td>${esc(x.name)}</td><td>${esc(x.contact||'')}</td><td>${esc(x.city||'')}</td><td>${esc(x.createdAt?new Date(x.createdAt).toLocaleDateString('fr-FR'):'')}</td>`;
+ return `<div style="overflow-x:auto"><table class="tbl"><thead><tr>${entete}</tr></thead><tbody>${L.map(x=>`<tr>${ligne(x)}<td><span class="tag ${etat(k,x)[1]}">${etat(k,x)[0]}</span></td><td><button class="btn g" style="padding:7px 12px" onclick="ouvrirCompte('${k}','${x.id}')">Ouvrir</button></td></tr>`).join('')||`<tr><td colspan="6" style="text-align:center;color:var(--mu);padding:30px">${isPro(k)?'Aucun prestataire pour le moment.':'Aucun client inscrit pour le moment.'}</td></tr>`}</tbody></table></div>`}
+function renderPeople(k){
+ const pro=isPro(k),L=listeOf(k),titre=pro?'Prestataires':'Clients';
+ $('#crumb').innerHTML=`Tableau de bord › <b>${titre}</b>`;
+ const nb=f=>L.filter(f).length;
+ $('#content').innerHTML=`<div class="head"><div><h1>${titre}</h1><p>${pro?'Profils, métiers et zones des prestataires. Suspension possible à tout moment.':'Comptes clients inscrits. Suspension possible à tout moment.'}</p></div></div>
+ <div class="kpis" style="grid-template-columns:repeat(3,1fr)">${kpi(pro?'Prestataires actifs':'Clients actifs',nb(x=>estActif(k,x)&&!x.suspended),'')}${kpi('Suspendus',nb(x=>x.suspended),'')}${kpi('Total inscrits',L.length,'')}</div>
+ <div class="row-f" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px"><div class="seg" role="tablist">${[['tous','Tous'],['actifs','Actifs'],['suspendus','Suspendus']].map(t=>`<button role="tab" aria-selected="${PK==t[0]}" class="${PK==t[0]?'on':''}" onclick="PK='${t[0]}';renderPeople('${k}')">${t[1]}</button>`).join('')}</div>
+ <input class="fld" style="margin:0;max-width:320px" aria-label="Rechercher" placeholder="Rechercher un nom, une ville…" value="${esc(PQ)}" oninput="PQ=this.value;$('#ptab').innerHTML=tablePeople('${k}')"></div>
+ <div class="card" style="padding:0;overflow:hidden"><div id="ptab">${tablePeople(k)}</div></div>`}
+/* ---------- Étape 5 : réservations, missions et devis ---------- */
+const MST={attente:['En attente de confirmation','t-or'],demande_devis:['Demande de devis','t-or'],devis_propose:['Devis proposé','t-bl'],a_payer:['À payer','t-or'],payee:['Payée','t-ok'],en_cours:['En cours','t-bl'],fin_signalee:['Fin à confirmer','t-or'],terminee:['Terminée','t-ok'],annulee:['Annulée','t-ko'],refusee:['Refusée','t-ko'],expiree:['Expirée','t-ko'],litige:['Litige','t-ko']};
+const MGROUPE={en:['attente','demande_devis','devis_propose','a_payer','payee','en_cours','fin_signalee','litige'],ter:['terminee'],ann:['annulee','refusee','expiree']};
+const MANNULABLE=['attente','demande_devis','devis_propose','a_payer','payee','en_cours'];
+let MG='en';
+// Annulation par l'administrateur : motif obligatoire, historisée ; une mission payée passe en remboursement à traiter
+async function annulerMission(id,motif){try{await api(`/admin/bookings/${id}/cancel`,'POST',{motif});closeDlg();toast('Mission annulée');await loadAdmin();renderMissions(P)}catch(e){toast(e.message)}}
+function ouvrirMission(id){const m=DB.missions.find(x=>x.id==id);if(!m)return;
+ const etapes=['Demande reçue','Prestataire confirmé','Payée','Travaux démarrés','Fin signalée','Confirmée par le client'];
+ const rang={attente:0,demande_devis:0,devis_propose:1,a_payer:1,payee:2,en_cours:3,fin_signalee:4,terminee:5};
+ const r=rang[m.st];
+ dlg(`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><b style="font-size:17px">Mission ${esc(m.ref)}</b><button class="ibtn" aria-label="Fermer" onclick="closeDlg()">✕</button></div>
+ <div class="kv3"><span>Statut</span><b><span class="tag ${MST[m.st][1]}">${MST[m.st][0]}</span></b></div>
+ ${[['Client',m.client],['Prestataire',m.pro],['Métier',m.trade],['Zone',m.zone],['Adresse',m.addr],['Date souhaitée',m.date],['Type',m.mode=='devis'?'Devis':'Réservation immédiate'],['Montant',m.price?money(m.price):'À définir']].map(x=>`<div class="kv3"><span>${x[0]}</span><b>${esc(x[1])}</b></div>`).join('')}
+ <div class="lbl" style="margin:16px 0 4px"><span>Avancement</span></div>
+ ${etapes.map((e,i)=>`<div class="kv3"><span>${i+1}. ${e}</span><b style="color:${r!=null&&i<=r?'var(--ok)':'var(--mu)'}">${r!=null&&i<=r?'✔':'—'}</b></div>`).join('')}
+ ${m.remboursement?'<p class="sub" style="border:0;color:var(--ko)">Remboursement à traiter (voir Finances).</p>':''}
+ ${m.motif?`<p class="sub" style="border:0">Motif : ${esc(m.motif)}</p>`:''}
+ ${MANNULABLE.includes(m.st)?`<label class="l" for="mm" style="margin-top:14px">Motif d'annulation (obligatoire)</label><textarea class="fld" id="mm" rows="2"></textarea><button class="btn" style="background:var(--ko)" onclick="annulerMission('${m.id}',$('#mm').value.trim())">Annuler la mission</button>`:''}`)}
+function renderMissions(mode){
+ const devis=mode=='devis';
+ $('#crumb').innerHTML=`Tableau de bord › <b>${devis?'Devis':'Réservations et missions'}</b>`;
+ const base=DB.missions.filter(m=>(m.mode=='devis')==devis);
+ const L=base.filter(m=>MGROUPE[MG].includes(m.st)).sort((a,b)=>b.createdAt-a.createdAt);
+ const nb=g=>base.filter(m=>MGROUPE[g].includes(m.st)).length;
+ $('#content').innerHTML=`<div class="head"><div><h1>${devis?'Devis':'Réservations et missions'}</h1><p>${devis?'Demandes de devis, prix proposés et acceptations.':'Suivi des réservations immédiates, de l\'acceptation jusqu\'à la confirmation du client.'}</p></div></div>
+ <div class="kpis" style="grid-template-columns:repeat(3,1fr)">${kpi('En cours',nb('en'),'')}${kpi('Terminées',nb('ter'),'')}${kpi('Annulées ou refusées',nb('ann'),'')}</div>
+ <div class="seg" role="tablist" style="display:inline-flex;flex-wrap:wrap;margin-bottom:14px">${[['en','En cours'],['ter','Terminées'],['ann','Annulées ou refusées']].map(t=>`<button role="tab" aria-selected="${MG==t[0]}" class="${MG==t[0]?'on':''}" onclick="MG='${t[0]}';renderMissions('${mode}')">${t[1]} <span style="color:var(--mu)">${nb(t[0])}</span></button>`).join('')}</div>
+ <div class="card" style="padding:0;overflow:hidden"><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Réf.</th><th>Client</th><th>Prestataire</th><th>Métier</th><th>Date</th><th>${devis?'Prix proposé':'Montant'}</th><th>Statut</th><th></th></tr></thead><tbody>${L.map(m=>`<tr><td>${esc(m.ref)}</td><td>${esc(m.client)}</td><td>${esc(m.pro)}</td><td>${esc(m.trade)}</td><td>${esc(m.date)}</td><td>${m.price?money(m.price):'—'}</td><td><span class="tag ${MST[m.st][1]}">${MST[m.st][0]}</span></td><td><button class="btn g" style="padding:7px 12px" onclick="ouvrirMission('${m.id}')">Ouvrir</button></td></tr>`).join('')||`<tr><td colspan="8" style="text-align:center;color:var(--mu);padding:30px">${devis?'Aucun devis dans cette liste.':'Aucune réservation dans cette liste.'}</td></tr>`}</tbody></table></div></div>`}
+/* ---------- Étape 6 : finances, transactions et commissions ---------- */
+const TRADES=['Plomberie','Électricité','Menuiserie','Peinture','Maçonnerie','Climatisation','Nettoyage','Autres services'];
+const today=()=>new Date().toLocaleDateString('fr-FR');
+const fmt=n=>new Intl.NumberFormat('fr-FR').format(Math.round(n)).replace(/\s/g,' ');
+// Taux figé à l'acceptation du prix ; à défaut, taux courant de la catégorie (15 % de référence)
+const taux=m=>m.taux!=null?m.taux:(DB.rates[m.trade]??15);
+const comm=m=>Math.round((m.price||0)*taux(m)/100);
+const net=m=>(m.price||0)-comm(m);
+const estPaye=m=>['payee','en_cours','fin_signalee','terminee'].includes(m.st)||(m.st=='annulee'&&!!m.remboursement);
+const aPayer=m=>estPaye(m)&&!m.rembourse;
+const RET_ACT=['en_cours','verse'];
+const prosNoms=()=>[...new Set([...DB.missions.map(m=>m.pro),...DB.retraits.map(r=>r.pro)])];
+const soldeBrut=n=>DB.missions.filter(m=>m.pro==n&&m.st=='terminee').reduce((a,m)=>a+net(m),0);
+const retire=n=>DB.retraits.filter(r=>r.pro==n&&RET_ACT.includes(r.st)).reduce((a,r)=>a+r.montant,0);
+const soldeDispo=n=>soldeBrut(n)-retire(n);
+function totaux(){const P=DB.missions;
+ return {paye:P.filter(aPayer).reduce((a,m)=>a+(m.price||0),0),
+  commissions:P.filter(aPayer).reduce((a,m)=>a+comm(m),0),
+  dues:prosNoms().reduce((a,n)=>a+Math.max(0,soldeDispo(n)),0),
+  verses:DB.retraits.filter(r=>r.st=='verse').reduce((a,r)=>a+r.montant,0)}}
+function statutFin(m){if(m.rembourse)return['Remboursé','t-ok'];if(m.st=='annulee'&&m.remboursement)return['Remboursement à traiter','t-ko'];if(m.st=='terminee')return['Confirmée · disponible au retrait','t-ok'];return['Payé, travaux en cours','t-bl']}
+let FF='tous';
+async function rembourser(id){try{await api(`/admin/payments/${id}/refunded`,'POST');toast('Remboursement enregistré');await loadAdmin();renderFin('fin')}catch(e){toast(e.message)}}
+function renderFin(k){
+ if(k=='com')return renderCom();
+ $('#crumb').innerHTML='Tableau de bord › <b>Finances et transactions</b>';
+ const t=totaux();
+ let L=DB.missions.filter(m=>estPaye(m)||m.remboursement);
+ if(FF=='confirmees')L=L.filter(m=>m.st=='terminee');
+ if(FF=='remb')L=L.filter(m=>m.remboursement||m.rembourse);
+ $('#content').innerHTML=`<div class="head"><div><h1>Finances et transactions</h1><p>Paiements reçus, commissions et soldes des prestataires. Les versements se font par retrait.</p></div></div>
+ <div class="fin">${kpi('Total payé par les clients',fmt(t.paye),'FCFA')}${kpi('Commissions Ouvrage',fmt(t.commissions),'FCFA')}${kpi('Soldes dus aux pros',fmt(t.dues),'FCFA')}${kpi('Versements effectués',fmt(t.verses),'FCFA')}</div>
+ <div class="seg" role="tablist" style="display:inline-flex;flex-wrap:wrap;margin-bottom:14px">${[['tous','Toutes'],['confirmees','Prestations confirmées'],['remb','Remboursements']].map(x=>`<button role="tab" aria-selected="${FF==x[0]}" class="${FF==x[0]?'on':''}" onclick="FF='${x[0]}';renderFin('fin')">${x[1]}</button>`).join('')}</div>
+ <div class="card" style="padding:0;overflow:hidden"><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Réf.</th><th>Client</th><th>Prestataire</th><th>Montant</th><th>Commission</th><th>Part prestataire</th><th>Statut</th><th></th></tr></thead><tbody>${L.map(m=>{const s=statutFin(m);const act=(m.remboursement&&!m.rembourse)?`<button class="btn g" style="padding:7px 12px" onclick="rembourser('${m.id}')">Rembourser</button>`:'';
+  return `<tr><td>${esc(m.ref)}</td><td>${esc(m.client)}</td><td>${esc(m.pro)}</td><td>${fmt(m.price||0)} FCFA</td><td>${fmt(comm(m))} FCFA <span style="color:var(--mu);font-size:12px">(${taux(m)} %)</span></td><td>${fmt(net(m))} FCFA</td><td><span class="tag ${s[1]}">${s[0]}</span></td><td>${act}</td></tr>`}).join('')||'<tr><td colspan="8" style="text-align:center;color:var(--mu);padding:30px">Aucune transaction pour le moment.</td></tr>'}</tbody></table></div></div>`}
+function renderCom(){
+ $('#crumb').innerHTML='Tableau de bord › <b>Commissions</b>';
+ const hist=DB.journal.filter(j=>j.action.startsWith('Taux'));
+ $('#content').innerHTML=`<div class="head"><div><h1>Commissions</h1><p>Taux de commission par catégorie de métier. Le taux est figé quand le prix est accepté : une modification ne touche pas les missions déjà conclues.</p></div></div>
+ <div class="two"><div class="card"><div class="lbl"><span>Taux par catégorie</span></div>
+ <div style="margin-top:12px">${TRADES.map(t=>`<div class="kv3" style="align-items:center"><span style="color:var(--tx)">${esc(t)}</span><span style="display:flex;align-items:center;gap:8px"><input class="fld" style="width:90px;margin:0" type="number" min="0" max="50" step="0.5" aria-label="Taux ${esc(t)}" data-trade="${esc(t)}" value="${DB.rates[t]??15}"> %</span></div>`).join('')}</div>
+ <button class="btn" style="margin-top:14px" onclick="saveTaux()">Enregistrer les taux</button></div>
+ <div class="card"><div class="lbl"><span>Exemple de répartition</span></div><div style="margin-top:12px"><div class="kv3"><span>Montant payé par le client</span><b>50 000 FCFA</b></div><div class="kv3"><span>Commission Ouvrage (15 %)</span><b>7 500 FCFA</b></div><div class="kv3"><span>Part du prestataire (85 %)</span><b>42 500 FCFA</b></div></div>
+ <div class="sec" style="margin-top:18px"><h2>Historique des taux</h2></div>${hist.map(j=>`<div class="kv3"><div><b>${esc(j.pro)}</b><div style="color:var(--mu);font-size:12.5px">${esc(j.motif)}</div></div><span style="color:var(--mu);font-size:12px;white-space:nowrap">${esc(j.when)}</span></div>`).join('')||'<div class="empty" style="min-height:70px">Aucune modification de taux.</div>'}</div></div>`}
+async function saveTaux(){const rates=[];document.querySelectorAll('input[data-trade]').forEach(i=>{const t=i.dataset.trade,v=+i.value;if(v!==(DB.rates[t]??15))rates.push({trade:t,rate:v})});
+ if(!rates.length)return toast('Aucun changement');
+ try{await api('/admin/rates','PUT',{rates});await loadAdmin();toast(`${rates.length} taux modifié(s)`);renderCom()}catch(e){toast(e.message)}}
+/* ---------- Étape 7 : retraits, litiges et rapports ---------- */
+const RST={demande:['Demandé','t-or'],en_cours:['En cours de virement','t-bl'],verse:['Viré','t-ok'],rejete:['Rejeté','t-ko']};
+let RTF='demande';
+// Retrait : le montant ne peut pas dépasser le solde ; il est bloqué dès la demande
+async function retraitAction(id,action,motif){const path={encours:'start',verse:'paid',rejete:'reject'}[action];if(!path)return;
+ try{await api(`/admin/withdrawals/${id}/${path}`,'POST',action==='rejete'?{motif}:undefined);closeDlg();toast('Retrait mis à jour');await loadAdmin();renderRet()}catch(e){toast(e.message)}}
+function ouvrirRetrait(id){const r=DB.retraits.find(x=>x.id==id);if(!r)return;
+ dlg(`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><b style="font-size:17px">Retrait ${esc(r.ref)}</b><button class="ibtn" aria-label="Fermer" onclick="closeDlg()">✕</button></div>
+ ${[['Prestataire',r.pro],['Montant',fmt(r.montant)+' FCFA'],['Moyen',r.moyen],['Numéro ou compte',r.numero],['Demandé le',r.date],['Solde disponible',fmt(Math.max(0,soldeDispo(r.pro)))+' FCFA'],['Statut',RST[r.st][0]]].map(x=>`<div class="kv3"><span>${x[0]}</span><b>${esc(x[1])}</b></div>`).join('')}
+ ${r.st=='demande'?`<div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap"><button class="btn" onclick="retraitAction('${r.id}','encours')">Lancer le virement</button></div>`:''}
+ ${r.st=='en_cours'?`<div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap"><button class="btn" onclick="retraitAction('${r.id}','verse')">Marquer comme viré</button></div>`:''}
+ ${['demande','en_cours'].includes(r.st)?`<label class="l" for="rm" style="margin-top:14px">Motif de rejet (obligatoire pour rejeter)</label><textarea class="fld" id="rm" rows="2"></textarea><button class="btn" style="background:var(--ko)" onclick="retraitAction('${r.id}','rejete',$('#rm').value.trim())">Rejeter le retrait</button>`:''}`)}
+function renderRet(){
+ $('#crumb').innerHTML='Tableau de bord › <b>Retraits</b>';
+ const nb=s=>DB.retraits.filter(r=>r.st==s).length;
+ const L=DB.retraits.filter(r=>r.st==RTF).sort((a,b)=>b.createdAt-a.createdAt);
+ $('#content').innerHTML=`<div class="head"><div><h1>Retraits</h1><p>Demandes de retrait des prestataires. Le solde est vérifié au lancement du virement.</p></div></div>
+ <div class="kpis" style="grid-template-columns:repeat(3,1fr)">${kpi('Demandés',nb('demande'),'')}${kpi('En cours de virement',nb('en_cours'),'')}${kpi('Virés',nb('verse'),'')}</div>
+ <div class="seg" role="tablist" style="display:inline-flex;flex-wrap:wrap;margin-bottom:14px">${Object.keys(RST).map(k=>`<button role="tab" aria-selected="${RTF==k}" class="${RTF==k?'on':''}" onclick="RTF='${k}';renderRet()">${RST[k][0]} <span style="color:var(--mu)">${nb(k)}</span></button>`).join('')}</div>
+ <div class="card" style="padding:0;overflow:hidden"><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Réf.</th><th>Prestataire</th><th>Montant</th><th>Moyen</th><th>Demandé le</th><th>Statut</th><th></th></tr></thead><tbody>${L.map(r=>`<tr><td>${esc(r.ref)}</td><td>${esc(r.pro)}</td><td>${fmt(r.montant)} FCFA</td><td>${esc(r.moyen)}</td><td>${esc(r.date)}</td><td><span class="tag ${RST[r.st][1]}">${RST[r.st][0]}</span></td><td><button class="btn g" style="padding:7px 12px" onclick="ouvrirRetrait('${r.id}')">Ouvrir</button></td></tr>`).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--mu);padding:30px">Aucun retrait dans cette liste.</td></tr>'}</tbody></table></div></div>`}
+
+// Litige : l'administrateur tranche ; le remboursement ou le paiement au prestataire suit la décision
+const LST={ouvert:['Ouvert','t-or'],resolu:['Résolu','t-ok']};
+let LTF='ouvert';
+async function trancher(id,dec,motif){try{await api(`/admin/disputes/${id}/decide`,'POST',{decision:dec,motif});closeDlg();toast('Décision enregistrée');await loadAdmin();renderLit()}catch(e){toast(e.message)}}
+function ouvrirLitige(id){const l=DB.litiges.find(x=>x.id==id);if(!l)return;
+ dlg(`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><b style="font-size:17px">Litige ${esc(l.ref)}</b><button class="ibtn" aria-label="Fermer" onclick="closeDlg()">✕</button></div>
+ ${[['Mission',l.mission],['Client',l.client],['Prestataire',l.pro],['Motif du litige',l.type],['Ouvert le',l.date],['Statut',LST[l.st][0]]].map(x=>`<div class="kv3"><span>${x[0]}</span><b>${esc(x[1])}</b></div>`).join('')}
+ <p class="sub" style="border:0;padding:12px 0 0">${esc(l.description)}</p>
+ ${l.st=='ouvert'?`<label class="l" for="lm" style="margin-top:14px">Motivation de la décision (obligatoire)</label><textarea class="fld" id="lm" rows="3"></textarea><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn g" onclick="trancher('${l.id}','client',$('#lm').value.trim())">Rembourser le client</button><button class="btn" onclick="trancher('${l.id}','pro',$('#lm').value.trim())">Confirmer la prestation</button></div>`:`<div class="kv3"><span>Décision</span><b>${l.decision=='client'?'Remboursement du client':'Prestation confirmée'}</b></div><p class="sub" style="border:0">${esc(l.motif||'')}</p>`}`)}
+function renderLit(){
+ $('#crumb').innerHTML='Tableau de bord › <b>Litiges</b>';
+ const nb=s=>DB.litiges.filter(l=>l.st==s).length;
+ const L=DB.litiges.filter(l=>l.st==LTF).sort((a,b)=>b.createdAt-a.createdAt);
+ $('#content').innerHTML=`<div class="head"><div><h1>Litiges</h1><p>Contestations d'une prestation, annulations et remboursements. Chaque décision est motivée et historisée.</p></div></div>
+ <div class="kpis" style="grid-template-columns:repeat(2,1fr)">${kpi('Ouverts',nb('ouvert'),'')}${kpi('Résolus',nb('resolu'),'')}</div>
+ <div class="seg" role="tablist" style="display:inline-flex;margin-bottom:14px">${Object.keys(LST).map(k=>`<button role="tab" aria-selected="${LTF==k}" class="${LTF==k?'on':''}" onclick="LTF='${k}';renderLit()">${LST[k][0]} <span style="color:var(--mu)">${nb(k)}</span></button>`).join('')}</div>
+ <div class="card" style="padding:0;overflow:hidden"><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Réf.</th><th>Mission</th><th>Motif</th><th>Ouvert le</th><th>Statut</th><th></th></tr></thead><tbody>${L.map(l=>`<tr><td>${esc(l.ref)}</td><td>${esc(l.mission)}</td><td>${esc(l.type)}</td><td>${esc(l.date)}</td><td><span class="tag ${LST[l.st][1]}">${LST[l.st][0]}</span></td><td><button class="btn g" style="padding:7px 12px" onclick="ouvrirLitige('${l.id}')">Ouvrir</button></td></tr>`).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--mu);padding:30px">Aucun litige dans cette liste.</td></tr>'}</tbody></table></div></div>`}
+
+// Rapports : chiffres calculés à partir des données réelles
+function renderRap(){
+ $('#crumb').innerHTML='Tableau de bord › <b>Rapports</b>';
+ const M=DB.missions,t=totaux();
+ const zones=[...new Set([...DB.reqs.map(r=>r.zone),...M.map(m=>m.zone)].filter(Boolean))];
+ const lignes=zones.map(z=>({z,dem:DB.reqs.filter(r=>r.zone==z).length,mis:M.filter(m=>m.zone==z&&m.st=='terminee').length,ca:M.filter(m=>m.zone==z&&aPayer(m)).reduce((a,m)=>a+(m.price||0),0)}));
+ window.RAPPORT=lignes;
+ $('#content').innerHTML=`<div class="head"><div><h1>Rapports</h1><p>Activité par zone et par métier, à partir des comptes et des missions.</p></div><div class="sp"><button class="btn g" onclick="exportRapport()">⬇ Exporter CSV</button></div></div>
+ <div class="kpis">${kpi('Clients inscrits',DB.clients.length,'')}${kpi('Prestataires actifs',DB.pros.filter(p=>p.verified&&!p.suspended).length,'')}${kpi('Demandes reçues',DB.reqs.length,'')}${kpi('Chiffre d\'affaires',fmt(t.paye),'FCFA')}</div>
+ <div class="two"><div class="card" style="padding:0;overflow:hidden"><div style="padding:16px 18px" class="lbl"><span>Par zone</span></div><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Zone</th><th>Demandes</th><th>Missions terminées</th><th>Chiffre d'affaires</th></tr></thead><tbody>${lignes.map(l=>`<tr><td>${esc(l.z)}</td><td>${l.dem}</td><td>${l.mis}</td><td>${fmt(l.ca)} FCFA</td></tr>`).join('')||'<tr><td colspan="4" style="text-align:center;color:var(--mu);padding:30px">Aucune donnée pour le moment.</td></tr>'}</tbody></table></div></div>
+ <div class="card"><div class="lbl"><span>Missions terminées par métier</span></div><div style="margin-top:10px">${TRADES.map(x=>`<div class="kv3"><span>${esc(x)}</span><b>${M.filter(m=>m.trade==x&&m.st=='terminee').length}</b></div>`).join('')}</div></div></div>`}
+function exportRapport(){const L=window.RAPPORT||[];if(!L.length)return toast('Aucune donnée à exporter');
+ const csv=['Zone;Demandes;Missions terminées;Chiffre d\'affaires (FCFA)',...L.map(l=>[l.z,l.dem,l.mis,l.ca].join(';'))].join('\n');
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'}));a.download='rapport-ouvrage.csv';a.click()}
+/* ---------- Support clients : fils de discussion et réponses ---------- */
+// Chaque fil correspond à un client. Les données viennent du backend (GET /v1/admin/support/:userId) une fois l'administration connectée.
+let SUP_SEL=null;
+async function selectSupport(id){SUP_SEL=id;
+ try{const d=await api('/admin/support/'+id);const f=DB.support.find(x=>x.id==id);if(f)f.messages=d.items.map(m=>({sender:m.sender,body:m.body,date:new Date(m.date).toLocaleString('fr-FR')}))}catch(e){toast(e.message)}
+ renderSupport()}
+function renderSupport(){
+ $('#crumb').innerHTML='Tableau de bord › <b>Support clients</b>';
+ const fils=DB.support.slice().sort((a,b)=>b.lastAt-a.lastAt);
+ if(!fils.some(f=>f.id==SUP_SEL))SUP_SEL=fils[0]?fils[0].id:null;
+ const f=fils.find(x=>x.id==SUP_SEL);
+ $('#content').innerHTML=`<div class="head"><div><h1>Support clients</h1><p>Messages envoyés par les clients et réponses de l'équipe Ouvrage. La réponse est aussi envoyée en notification au client.</p></div></div>
+ <div class="two" style="grid-template-columns:minmax(220px,1fr) 2fr;align-items:start">
+  <div class="card" style="padding:0;overflow:hidden">${fils.map(x=>`<div class="kv3" role="button" tabindex="0" aria-current="${x.id==SUP_SEL}" style="padding:12px 14px;cursor:pointer;${x.id==SUP_SEL?'background:#ff6a1520':''}" onclick="selectSupport('${x.id}')"><div><b>${esc(x.name)}</b><div class="mu" style="font-size:12px">${esc(x.last)}</div></div></div>`).join('')||'<div class="empty" style="min-height:120px;border:0">Aucun message de client pour le moment.</div>'}</div>
+  <div class="card">${f?`<div class="lbl"><span>${esc(f.name)}</span></div>
+   <div style="margin:12px 0;display:flex;flex-direction:column;gap:8px;max-height:320px;overflow:auto">${f.messages.map(m=>`<div style="align-self:${m.sender=='support'?'flex-end':'flex-start'};max-width:80%;background:${m.sender=='support'?'#ff6a13':'#1b1b20'};padding:9px 12px;border-radius:14px"><div style="white-space:pre-wrap">${esc(m.body)}</div><div style="font-size:11px;opacity:.7;margin-top:3px">${m.sender=='support'?'Équipe Ouvrage':'Client'} · ${esc(m.date)}</div></div>`).join('')}</div>
+   <label class="l" for="supR">Votre réponse</label><textarea class="fld" id="supR" rows="3" maxlength="2000" placeholder="Écrivez votre réponse au client"></textarea>
+   <button class="btn" onclick="repondreSupport('${f.id}')">Envoyer la réponse</button>`:'<div class="empty">Sélectionnez une conversation.</div>'}</div></div>`}
+async function repondreSupport(id){const t=$('#supR').value.trim();if(!t)return toast('Écrivez une réponse');
+ try{await api(`/admin/support/${id}/messages`,'POST',{body:t});toast('Réponse envoyée');await selectSupport(id)}catch(e){toast(e.message)}}
+/* ---------- Données : chargées depuis l'API à la connexion, rechargées après chaque action ---------- */
+const ST_REQ=['nouvelle','distribuee','proposee','choisie','annulee','expiree'];
+const dateFr=d=>new Date(d).toLocaleDateString('fr-FR');
+async function loadAdmin(){
+ const [reqs,pros,clients,bk,dis,ret,rates,sup,audit]=await Promise.all([
+  Promise.all(ST_REQ.map(x=>api('/admin/requests?status='+x))),
+  api('/admin/pros'),api('/admin/clients'),
+  Promise.all(['en','ter','ann'].map(g=>api('/admin/bookings?group='+g))),
+  Promise.all(['ouvert','resolu'].map(x=>api('/admin/disputes?status='+x))),
+  Promise.all(['demande','en_cours','verse','rejete'].map(x=>api('/admin/withdrawals?status='+x))),
+  api('/admin/rates'),api('/admin/support'),api('/admin/audit?limit=100')]);
+ DB.reqs=reqs.flatMap(x=>x.items).map(r=>({id:r.id,ref:r.ref,client:r.client,trade:r.trade,title:r.title,desc:r.description,addr:r.address,zone:r.zone,urgency:r.urgency,mode:'demande',date:dateFr(r.date),price:0,st:r.status,sent:r.sent||[],createdAt:Date.parse(r.date)||0}));
+ DB.pros=pros.items.map(p=>({id:p.id,name:p.name,city:p.city,contact:p.contact,trades:p.trades||[],zones:[],verified:p.verification==='valide',dispo:p.available,note:p.rating||0,suspended:p.status==='suspended',status:p.verification,submittedAt:0,docs:null,motif:''}));
+ DB.clients=clients.items.map(c=>({id:c.id,name:c.name,city:c.city,contact:c.contact,zone:'',createdAt:Date.parse(c.date)||0,suspended:c.status==='suspended',motif:''}));
+ DB.missions=bk.flatMap(x=>x.items).map(b=>({id:b.id,ref:b.ref,client:b.client,pro:b.pro,trade:b.trade,zone:'',price:b.price||0,st:b.status,mode:b.mode,createdAt:Date.parse(b.date)||0,taux:b.commissionRate??undefined,remboursement:b.payment==='refund_pending'||b.payment==='refunded',rembourse:b.payment==='refunded',motif:''}));
+ DB.litiges=dis.flatMap(x=>x.items).map(d=>({id:d.id,ref:'LIT-'+d.id,mission:d.ref,client:d.client,pro:d.pro,type:d.type,description:d.description,date:dateFr(d.date),createdAt:Date.parse(d.date)||0,st:d.status,decision:d.decision}));
+ DB.retraits=ret.flatMap(x=>x.items).map(w=>({id:w.id,ref:w.ref,pro:w.pro,proId:w.proId,montant:w.amount,moyen:w.method,numero:w.number,st:w.status,motif:w.reason,date:dateFr(w.date),createdAt:Date.parse(w.date)||0}));
+ DB.rates=Object.fromEntries(rates.items.map(r=>[r.trade,r.rate]));
+ DB.support=sup.items.map(t=>({id:t.id,name:t.name,last:t.last||'',lastAt:Date.parse(t.date)||0,messages:[]}));
+ DB.journal=audit.items.map(a=>({when:new Date(a.date).toLocaleString('fr-FR'),pro:a.entity+' #'+a.entityId,action:a.action,motif:''}));
+}
+function resetAdmin(){Object.assign(DB,{reqs:[],pros:[],clients:[],missions:[],rates:{},retraits:[],litiges:[],support:[],journal:[]})}
+function askMotif(title,hint,cb){dlg(`<b style="font-size:17px">${esc(title)}</b><p class="mu" style="margin:6px 0 12px">${esc(hint)}</p><textarea class="fld" id="am" rows="3" aria-label="Motif"></textarea><button class="btn" id="amok">Confirmer</button>`);
+ $('#amok').onclick=async()=>{const v=$('#am').value.trim();if(!v)return toast('Motif requis');try{await cb(v)}catch(e){toast(e.message)}}}
+
+/* ---------- Connexion : mot de passe, puis code de double authentification ---------- */
+// Le tableau de bord est servi par le backend de l'administration (même domaine). Le jeton d'accès reste en mémoire ;
+// le jeton de rafraîchissement est dans la session du navigateur, effacé à la fermeture de l'onglet.
+const API='/api/v1';
+let TOK=null;
+let LOGIN={contact:'',password:'',step:1,mode:'login',name:''};
+async function apiRaw(path,method='GET',body){const h={'Content-Type':'application/json'};if(TOK)h.Authorization='Bearer '+TOK;
+ const r=await fetch(API+path,{method,headers:h,body:body===undefined?undefined:JSON.stringify(body),credentials:'same-origin'});
+ const data=r.status===204?null:await r.json().catch(()=>null);return {ok:r.ok,status:r.status,data}}
+const msgOf=d=>(d&&d.error&&d.error.message)||'Une erreur est survenue';
+function keepSession(d){TOK=d.accessToken;sessionStorage.setItem('ouv-admin-rt',d.refreshToken)}
+async function renew(){const rt=sessionStorage.getItem('ouv-admin-rt');if(!rt)return false;
+ const r=await apiRaw('/auth/refresh','POST',{refreshToken:rt}).catch(()=>null);
+ if(!r||!r.ok){sessionStorage.removeItem('ouv-admin-rt');TOK=null;return false}keepSession(r.data);return true}
+async function api(path,method,body){let r=await apiRaw(path,method,body);if(r.status===401&&await renew())r=await apiRaw(path,method,body);
+ if(!r.ok)throw new Error(msgOf(r.data));return r.data}
+
+function showLogin(msg,ok){document.body.classList.add('locked');
+ const reg=LOGIN.mode==='register';
+ $('#content').innerHTML=`<form class="card login" onsubmit="return ${reg?'submitRegister':'submitLogin'}(event)" autocomplete="on">
+  <div class="logo" aria-hidden="true"><svg viewBox="0 0 48 48" width="24" height="24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M8 22 24 9l16 13"/><path d="M13 20v18h22V20"/><path d="M20 38v-9h8v9"/></svg></div>
+  <h1 style="font-size:22px;text-align:center">${reg?'Créer un compte':'Administration Ouvrage'}</h1>
+  <p class="mu" style="text-align:center;margin:6px 0 18px">${reg?'Créez votre compte administrateur, puis connectez-vous.':'Accès réservé aux administrateurs.'}</p>
+  ${msg?`<div class="${ok?'info':'alert'}" role="${ok?'status':'alert'}">${esc(msg)}</div>`:''}
+  ${reg
+    ?`<label class="l" for="rg-n">Nom complet</label><input class="fld" id="rg-n" autocomplete="name" required minlength="2" value="${esc(LOGIN.name)}">
+      <label class="l" for="rg-c">Adresse e-mail</label><input class="fld" id="rg-c" type="email" autocomplete="username" required value="${esc(LOGIN.contact)}">
+      <label class="l" for="rg-p">Mot de passe (8 caractères minimum)</label><input class="fld" id="rg-p" type="password" autocomplete="new-password" required minlength="8">
+      <label class="l" for="rg-p2">Confirmer le mot de passe</label><input class="fld" id="rg-p2" type="password" autocomplete="new-password" required minlength="8">
+      <button class="btn" id="lg-btn" type="submit" style="width:100%;justify-content:center">Créer mon compte</button>
+      <p class="mu" style="text-align:center;margin-top:14px">Déjà un compte ? <a href="#" style="color:var(--or)" onclick="LOGIN.mode='login';showLogin();return false">Se connecter</a></p>`
+    :(LOGIN.step===1
+    ?`<label class="l" for="lg-c">Adresse e-mail</label><input class="fld" id="lg-c" type="email" autocomplete="username" required value="${esc(LOGIN.contact)}">
+      <label class="l" for="lg-p">Mot de passe</label><input class="fld" id="lg-p" type="password" autocomplete="current-password" required>`
+    :`<p class="mu" style="margin-bottom:10px">Saisissez le code à 6 chiffres de votre application d'authentification.</p>
+      <label class="l" for="lg-t">Code de vérification</label><input class="fld" id="lg-t" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required>`)}
+  ${reg?'':`<button class="btn" id="lg-btn" type="submit">${LOGIN.step===1?'Continuer':'Se connecter'}</button>
+  ${LOGIN.step===2?'<button type="button" class="btn g" style="margin-top:8px" onclick="LOGIN.step=1;showLogin()">Retour</button>':''}
+  ${LOGIN.step===1?'<p class="mu" style="text-align:center;margin-top:14px">Pas encore de compte ? <a href="#" style="color:var(--or)" onclick="LOGIN.mode=\'register\';LOGIN.password=\'\';showLogin();return false">Créer un compte</a></p>':''}`}
+ </form>`;
+ const first=document.querySelector('#rg-n,#lg-c,#lg-t');if(first)first.focus()}
+
+// Création de compte : le serveur crée le compte (POST /auth/register) ; ensuite l'utilisateur se connecte
+async function submitRegister(e){e.preventDefault();const btn=$('#lg-btn');btn.disabled=true;
+ try{
+  const name=$('#rg-n').value.trim(),contact=$('#rg-c').value.trim(),pw=$('#rg-p').value,pw2=$('#rg-p2').value;
+  LOGIN.name=name;LOGIN.contact=contact;
+  if(pw.length<8){return showLogin('Le mot de passe doit contenir au moins 8 caractères')}
+  if(pw!==pw2){return showLogin('Les deux mots de passe ne sont pas identiques')}
+  const r=await apiRaw('/auth/register','POST',{name,contact,password:pw});
+  if(!r.ok)return showLogin(msgOf(r.data));
+  LOGIN={contact,password:'',step:1,mode:'login',name:''};
+  return showLogin('Compte créé. Vous pouvez maintenant vous connecter.',true);
+ }catch(err){showLogin('Serveur injoignable, réessayez')}
+ return false}
+
+async function submitLogin(e){e.preventDefault();const btn=$('#lg-btn');btn.disabled=true;
+ try{
+  if(LOGIN.step===1){LOGIN.contact=$('#lg-c').value.trim();LOGIN.password=$('#lg-p').value;
+   const r=await apiRaw('/auth/login','POST',{contact:LOGIN.contact,password:LOGIN.password});
+   if(!r.ok&&r.data&&r.data.error&&r.data.error.code==='mfa_required'){LOGIN.step=2;return showLogin()}
+   if(!r.ok){LOGIN.password='';return showLogin(msgOf(r.data))}
+   return finishLogin(r.data)}
+  const r=await apiRaw('/auth/login','POST',{contact:LOGIN.contact,password:LOGIN.password,totp:$('#lg-t').value.trim()});
+  if(!r.ok)return showLogin(msgOf(r.data));
+  return finishLogin(r.data);
+ }catch(err){showLogin('Serveur injoignable, réessayez')}
+ return false}
+
+async function finishLogin(d){keepSession(d);LOGIN={contact:'',password:'',step:1,mode:'login',name:''};document.body.classList.remove('locked');
+ try{await loadAdmin()}catch(e){toast(e.message)}renderNav();render()}
+async function logout(){const rt=sessionStorage.getItem('ouv-admin-rt');
+ if(rt)await apiRaw('/auth/logout','POST',{refreshToken:rt}).catch(()=>null);
+ sessionStorage.removeItem('ouv-admin-rt');TOK=null;LOGIN={contact:'',password:'',step:1,mode:'login',name:''};resetAdmin();showLogin()}
+// Au chargement : session encore valide ? sinon page de connexion
+async function boot(){if(await renew()){finishLogin({accessToken:TOK,refreshToken:sessionStorage.getItem('ouv-admin-rt')})}else showLogin()}
+boot();
+</script>
+</body></html>
