@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ouvrage — Administration</title>
+<title>Ouvrage — Administration</title><link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <style>
 :root{--bg:#0b0b0d;--side:#0f0f12;--card:#131316;--card2:#1b1b20;--ln:#24242b;--tx:#f4f4f6;--mu:#8e8e9a;--or:#ff6a13;--or2:#ff9a3d;--ok:#2ecc71;--ko:#ff4d4f;color-scheme:dark}
 *{box-sizing:border-box;margin:0}
@@ -110,7 +110,36 @@ label.l{font-size:12px;color:var(--mu);display:block}
  </main>
 </div>
 <div class="toast" id="toast" role="status" hidden></div>
+<script src="/vendor/gsap/gsap.min.js"></script>
 <script>
+/* ---------- Animations (GSAP) : sobres, jamais bloquantes, désactivées si « réduire les animations » ---------- */
+const RMQ=window.matchMedia?matchMedia('(prefers-reduced-motion: reduce)'):{matches:false};
+const anim={
+ on(){return !!window.gsap&&!RMQ.matches},
+ // Entrée d'une vue : blocs principaux, puis lignes, compteurs et graphiques
+ view(el){if(!this.on()||!el)return;
+  gsap.fromTo(el.children,{opacity:0,y:12},{opacity:1,y:0,duration:.4,ease:'power3.out',stagger:.05,overwrite:true,clearProps:'opacity,transform'});
+  this.rows(el);el.querySelectorAll('[data-count]').forEach(x=>this.count(x,+x.dataset.count));this.bars(el)},
+ // Cascade sur les lignes : plafonnée aux 15 premières pour les longues tables
+ rows(el){if(!this.on()||!el)return;const L=[...el.querySelectorAll('tbody tr,.anim-row')].slice(0,15);if(!L.length)return;
+  gsap.fromTo(L,{opacity:0,y:6},{opacity:1,y:0,duration:.3,ease:'power2.out',stagger:.03,delay:.12,overwrite:true,clearProps:'opacity,transform'})},
+ // Compteur numérique : la valeur finale est toujours affichée, même si l'animation est interrompue
+ count(el,v){if(!el)return;el.textContent=fmt(v);if(!this.on()||!(v>0))return;const o={n:0};
+  gsap.to(o,{n:v,duration:.6,ease:'power2.out',onUpdate:()=>{el.textContent=fmt(o.n)},onComplete:()=>{el.textContent=fmt(v)}})},
+ bars(el){if(!this.on()||!el)return;const B=el.querySelectorAll('.bar');
+  if(B.length)gsap.fromTo(B,{scaleY:0},{scaleY:1,duration:.55,ease:'power3.out',stagger:.04,delay:.15,transformOrigin:'50% 100%'});
+  const D=el.querySelectorAll('.donut');if(D.length)gsap.fromTo(D,{opacity:0,scale:.85,rotation:-30},{opacity:1,scale:1,rotation:0,duration:.6,ease:'power3.out',delay:.15,transformOrigin:'50% 50%'})},
+ // Éléments centrés par translate(-50%,…) : GSAP prend la main sur le centrage (xPercent/yPercent)
+ dlg(d,s){if(!this.on())return;d.style.transform='none';gsap.set(d,{xPercent:-50,yPercent:-50});
+  gsap.fromTo(d,{opacity:0,y:14,scale:.97},{opacity:1,y:0,scale:1,duration:.3,ease:'power3.out'});if(s)gsap.fromTo(s,{opacity:0},{opacity:1,duration:.25,ease:'power2.out'});
+  this.rows(d)},
+ toastIn(e){if(!this.on())return;gsap.killTweensOf(e);e.style.transform='none';gsap.set(e,{xPercent:-50});gsap.fromTo(e,{opacity:0,y:12},{opacity:1,y:0,duration:.28,ease:'power2.out'})},
+ toastOut(e){if(!this.on()){e.hidden=true;return}gsap.to(e,{opacity:0,y:8,duration:.2,ease:'power2.out',onComplete:()=>{e.hidden=true}})},
+ // Écran de connexion : apparition de la carte, glissement lors du passage à l'étape du code
+ login(f,step){if(!this.on()||!f)return;
+  if(step)gsap.fromTo(f.querySelectorAll('.fld,label,.btn,p'),{opacity:0,x:step===2?18:-18},{opacity:1,x:0,duration:.35,ease:'power3.out',stagger:.03,clearProps:'opacity,transform'});
+  else gsap.fromTo(f,{opacity:0,y:16},{opacity:1,y:0,duration:.5,ease:'power3.out',clearProps:'opacity,transform'})}
+};
 /* Rubriques du menu (ordre du cahier des charges) */
 const GROUPS=[
  ['Menu principal',[['dash','Tableau de bord','📊'],['req','Demandes clients','📥'],['dist','Distribution automatique','🔀']]],
@@ -136,9 +165,11 @@ function renderNav(){
 }
 function filt(v){Q=v;renderNav()}
 function toggleSide(o){$('#side').classList.toggle('open',o);$('#scrim').classList.toggle('open',o)}
-function notifsT(){const n=$('#np'),o=!n.classList.contains('open');n.classList.toggle('open',o);$('#bell').setAttribute('aria-expanded',o)}
-function toast(t){const e=$('#toast');e.textContent=t;e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>e.hidden=true,2200)}
-function go(k){P=k;PK='tous';PQ='';renderNav();toggleSide(false);$('#np').classList.remove('open');render()}
+function notifsT(){const n=$('#np'),o=!n.classList.contains('open');n.classList.toggle('open',o);$('#bell').setAttribute('aria-expanded',o);
+ if(o&&anim.on()){gsap.fromTo(n,{opacity:0,y:-8},{opacity:1,y:0,duration:.25,ease:'power2.out',clearProps:'opacity,transform'});anim.rows(n)}}
+function toast(t){const e=$('#toast');e.textContent=t;e.hidden=false;anim.toastIn(e);clearTimeout(toast.t);toast.t=setTimeout(()=>anim.toastOut(e),2200)}
+// Changement de rubrique : seul cas (avec la connexion) où la vue est animée ; les rechargements après une action ne rejouent rien
+function go(k){P=k;PK='tous';PQ='';renderNav();toggleSide(false);$('#np').classList.remove('open');render();anim.view($('#content'))}
 
 function render(){
  if(P=='sup')return renderSupport();
@@ -155,20 +186,20 @@ function render(){
  if(P=='dash'){
   $('#crumb').innerHTML='Tableau de bord › <b>Vue générale</b>';
   const today=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const D=DB.dash,M6=D.monthly.reduce((a,m)=>a+m.paid,0);
   c.innerHTML=`
-  <div class="head"><div><h1>Bienvenue, Administrateur</h1><p>${today}</p></div>
-   <div class="sp"><div class="seg" role="group" aria-label="Période">${['Journalier','Hebdo','Mensuel','Annuel'].map((x,i)=>`<button class="${i==2?'on':''}" aria-pressed="${i==2}" onclick="period(this)">${x}</button>`).join('')}</div>
-   <button class="btn g" onclick="exportCsv()">⬇ Exporter CSV</button></div></div>
+  <div class="head"><div><h1>Bienvenue, ${esc(DB.me.firstName||'Administrateur')}</h1><p>${today}</p></div>
+   <div class="sp"><button class="btn g" onclick="exportCsv()">⬇ Exporter CSV</button></div></div>
   <div class="kpis">
-   ${kpi('Clients inscrits',DB.clients.length,'')}${kpi('Prestataires actifs',DB.pros.filter(p=>p.verified).length,'')}${kpi('Demandes reçues',DB.reqs.length,'')}${kpi('Missions terminées',DB.missions.filter(m=>m.st=='terminee').length,'')}
+   ${kpi('Clients inscrits',D.clients,'')}${kpi('Prestataires actifs',D.prosActive,'',D.prosPending?D.prosPending+' en attente de validation':'')}${kpi('Demandes reçues',D.requestsTotal,'',D.requestsOpen?D.requestsOpen+' ouvertes · '+D.requestsToDistribute+' à distribuer':'')}${kpi('Missions terminées',D.missionsDone,'',D.missionsOngoing?D.missionsOngoing+' en cours':'')}
   </div>
   <div class="sec"><h2>Suivi financier</h2></div>
   <div class="fin">
-   ${kpi('Total payé par les clients',fmt(totaux().paye),'FCFA')}${kpi('Commissions Ouvrage',fmt(totaux().commissions),'FCFA')}${kpi('Sommes dues aux pros',fmt(totaux().dues),'FCFA')}${kpi('Versements effectués',fmt(totaux().verses),'FCFA')}
+   ${kpi('Total payé par les clients',D.paid,'FCFA')}${kpi('Commissions Ouvrage',D.commissions,'FCFA')}${kpi('Sommes dues aux pros',D.dues,'FCFA')}${kpi('Versements effectués',D.payouts,'FCFA',D.withdrawalsPending?fmt(D.withdrawalsPending)+' FCFA de retraits en attente':'')}
   </div>
   <div class="two">
-   <div class="card"><div class="lbl"><span>Tendance des ventes</span><span>Mensuel</span></div><div class="val">${money(0)}</div><div class="sub" style="margin-top:6px;border:0;padding:0">Chiffre d'affaires de l'année</div>${trendSvg()}</div>
-   <div class="card"><div class="lbl"><span>Répartition du chiffre d'affaires</span></div><div style="display:grid;place-items:center;margin:18px 0 6px"><svg viewBox="0 0 160 160" width="170" height="170" aria-hidden="true"><circle cx="80" cy="80" r="62" fill="none" stroke="#24242b" stroke-width="18"/><text x="80" y="78" text-anchor="middle" fill="#f4f4f6" font-size="15" font-weight="800">0 FCFA</text><text x="80" y="98" text-anchor="middle" fill="#8e8e9a" font-size="11">par catégorie</text></svg></div><div class="empty" style="min-height:70px">Aucune prestation payée pour le moment.</div></div>
+   <div class="card"><div class="lbl"><span>Tendance des ventes</span><span>Mensuel</span></div><div class="val"><span data-count="${M6}">${fmt(M6)}</span><small>FCFA</small></div><div class="sub" style="margin-top:6px;border:0;padding:0">Montants payés sur les 6 derniers mois</div>${trendSvg(D.monthly)}</div>
+   <div class="card"><div class="lbl"><span>Répartition du chiffre d'affaires</span></div>${donut()}</div>
   </div>
   <div class="sec"><h2>Transactions récentes</h2></div>
   <div class="card" style="padding:0;overflow:hidden"><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>ID</th><th>Client</th><th>Prestataire</th><th>Service</th><th>Statut</th><th>Montant</th><th>Commission</th></tr></thead><tbody>${txRows()}</tbody></table></div></div>`;
@@ -181,15 +212,33 @@ function render(){
 }
 function txRows(){const L=DB.missions.filter(m=>estPaye(m)||m.remboursement).sort((a,b)=>b.createdAt-a.createdAt).slice(0,8);
  return L.map(m=>`<tr><td>${esc(m.ref)}</td><td>${esc(m.client)}</td><td>${esc(m.pro)}</td><td>${esc(m.trade)}</td><td><span class="tag ${statutFin(m)[1]}">${statutFin(m)[0]}</span></td><td>${fmt(m.price||0)} FCFA</td><td>${fmt(comm(m))} FCFA</td></tr>`).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--mu);padding:30px">Aucune transaction pour le moment.</td></tr>'}
-function kpi(l,v,u){return `<div class="card"><div class="lbl"><span>${l}</span></div><div class="val">${v}${u?`<small>${u}</small>`:''}</div><div class="sub">${v==0?'Aucune donnée pour le moment':''}</div></div>`}
-function trendSvg(){
- const W=600,H=240,B=200,T=20;let g='';
- for(let i=0;i<=4;i++){const y=T+(B-T)*i/4;g+=`<line x1="40" x2="${W}" y1="${y}" y2="${y}" stroke="#24242b" stroke-dasharray="3 4"/><text x="32" y="${y+4}" fill="#5d5d68" font-size="11" text-anchor="end">${i==4?'0':''}</text>`}
- MOIS.forEach((m,i)=>{const x=40+i*((W-40)/12)+ (W-40)/24;g+=`<text x="${x}" y="${H-12}" fill="#5d5d68" font-size="11" text-anchor="middle">${m}</text>`});
- return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Tendance des ventes : aucune donnée">${g}</svg><div class="empty" style="min-height:0;margin-top:8px;padding:10px;border:0">Aucune vente enregistrée pour le moment.</div>`;
+// Carte de chiffre : un nombre est formaté et animé (data-count) à l'entrée de la vue
+function kpi(l,v,u,s){const n=typeof v==='number';return `<div class="card"><div class="lbl"><span>${l}</span></div><div class="val"><span${n?` data-count="${v}"`:''}>${n?fmt(v):v}</span>${u?`<small>${u}</small>`:''}</div><div class="sub">${s?esc(s):(v==0?'Aucune donnée pour le moment':'')}</div></div>`}
+// Barres des 6 derniers mois (GET /dashboard → monthly) : payé par les clients et commissions
+function trendSvg(monthly){
+ const W=600,H=240,B=200,T=20,now=new Date(),months=[];
+ for(let i=5;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);months.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'))}
+ const by=Object.fromEntries((monthly||[]).map(m=>[m.month,m])),max=Math.max(0,...months.map(k=>by[k]?by[k].paid:0));
+ let g='';const top=max||1,cw=(W-40)/6,bw=Math.min(36,cw/3);
+ for(let i=0;i<=4;i++){const y=T+(B-T)*i/4;g+=`<line x1="40" x2="${W}" y1="${y}" y2="${y}" stroke="#24242b" stroke-dasharray="3 4"/><text x="32" y="${y+4}" fill="#5d5d68" font-size="11" text-anchor="end">${i==4?'0':(max&&i==0?fmt(max/1000)+'k':'')}</text>`}
+ months.forEach((k,i)=>{const x=40+i*cw+cw/2,m=by[k]||{paid:0,commissions:0},h1=(B-T)*m.paid/top,h2=(B-T)*m.commissions/top;
+  if(m.paid)g+=`<rect class="bar" x="${x-bw-2}" y="${B-h1}" width="${bw}" height="${h1}" rx="4" fill="#ff6a13"><title>${MOIS[+k.slice(5)-1]} : ${money(m.paid)} payés</title></rect>`;
+  if(m.commissions)g+=`<rect class="bar" x="${x+2}" y="${B-h2}" width="${bw}" height="${h2}" rx="4" fill="#ff9a3d88"><title>${MOIS[+k.slice(5)-1]} : ${money(m.commissions)} de commissions</title></rect>`;
+  g+=`<text x="${x}" y="${H-12}" fill="#5d5d68" font-size="11" text-anchor="middle">${MOIS[+k.slice(5)-1]}</text>`});
+ return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${max?'Montants payés et commissions par mois':'Tendance des ventes : aucune donnée'}">${g}</svg>${max?'<div class="sub" style="border:0;padding:0;margin-top:6px"><span style="color:var(--or)">■</span> Payé par les clients &nbsp; <span style="color:#ff9a3d88">■</span> Commissions</div>':'<div class="empty" style="min-height:0;margin-top:8px;padding:10px;border:0">Aucune vente enregistrée pour le moment.</div>'}`;
 }
-function period(b){b.parentNode.querySelectorAll('button').forEach(x=>{x.classList.toggle('on',x===b);x.setAttribute('aria-pressed',x===b)})}
-function exportCsv(){toast('Aucune donnée à exporter')}
+// Répartition par métier, calculée sur les réservations payées chargées (les 200 plus récentes par groupe)
+function donut(){const C=['#ff6a13','#3b82f6','#2ecc71','#f5c542','#a855f7','#14b8a6','#ef4444','#8e8e9a'],by={};
+ DB.missions.filter(aPayer).forEach(m=>{by[m.trade]=(by[m.trade]||0)+(m.price||0)});
+ const L=Object.entries(by).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]),tot=L.reduce((a,x)=>a+x[1],0),R=62,P2=2*Math.PI*R;let off=0;
+ const segs=L.map(([t,v],i)=>{const len=P2*v/tot,s=`<circle cx="80" cy="80" r="${R}" fill="none" stroke="${C[i%C.length]}" stroke-width="18" stroke-dasharray="${len} ${P2-len}" stroke-dashoffset="${-off}" transform="rotate(-90 80 80)"/>`;off+=len;return s}).join('');
+ return `<div style="display:grid;place-items:center;margin:18px 0 6px"><svg viewBox="0 0 160 160" width="170" height="170" aria-hidden="true"><g class="donut"><circle cx="80" cy="80" r="${R}" fill="none" stroke="#24242b" stroke-width="18"/>${segs}</g><text x="80" y="78" text-anchor="middle" fill="#f4f4f6" font-size="15" font-weight="800">${fmt(tot)} FCFA</text><text x="80" y="98" text-anchor="middle" fill="#8e8e9a" font-size="11">par catégorie</text></svg></div>`+
+  (L.length?L.map(([t,v],i)=>`<div class="kv3 anim-row"><span><span style="color:${C[i%C.length]}">●</span> ${esc(t)}</span><b>${money(v)}</b></div>`).join(''):'<div class="empty" style="min-height:70px">Aucune prestation payée pour le moment.</div>')}
+// Export : rapport par zone produit par le serveur (GET /reports/zones.csv)
+async function exportCsv(){try{let r=await fetch(API+'/reports/zones.csv',{headers:{Authorization:'Bearer '+TOK},credentials:'same-origin'});
+ if(r.status===401&&await renew())r=await fetch(API+'/reports/zones.csv',{headers:{Authorization:'Bearer '+TOK},credentials:'same-origin'});
+ if(!r.ok){const d=await r.json().catch(()=>null);throw new Error(msgOf(d))}
+ const a=document.createElement('a');a.href=URL.createObjectURL(await r.blob());a.download='rapport-zones.csv';a.click()}catch(e){toast(e.message)}}
 
 /* ---------- Paramètres : compte de l'administrateur connecté ---------- */
 function renderSettings(){
@@ -210,47 +259,51 @@ function renderSettings(){
 async function changePwd(){const c=$('#sp-c').value,n=$('#sp-n').value,n2=$('#sp-n2').value;
  if(n.length<12)return toast('Le nouveau mot de passe doit faire 12 caractères minimum');
  if(n!==n2)return toast('Les deux mots de passe ne sont pas identiques');
- try{await api('/admin/account/password','POST',{currentPassword:c,newPassword:n});toast('Mot de passe modifié, reconnexion requise');logout()}catch(e){toast(e.message)}}
+ try{await api('/account/password','POST',{currentPassword:c,newPassword:n});toast('Mot de passe modifié, reconnexion requise');logout()}catch(e){toast(e.message)}}
 async function resetTotp(){const p=$('#sp-p2').value,t=$('#sp-t').value.trim();
  if(!p||!/^\d{6}$/.test(t))return toast('Mot de passe et code à 6 chiffres requis');
- try{const d=await api('/admin/account/totp/reset','POST',{password:p,totp:t});
+ try{const d=await api('/account/totp/reset','POST',{password:p,totp:t});
   dlg(`<b style="font-size:17px">Nouveau code de double authentification</b><p class="mu" style="margin:8px 0 12px">Ajoutez ce compte dans votre application d'authentification. Ce lien n'est affiché qu'une fois.</p><textarea class="fld" rows="3" readonly aria-label="Lien otpauth">${esc(d.otpauthUri)}</textarea><button class="btn" onclick="closeDlg();logout()">Enregistré, me reconnecter</button>`)}
  catch(e){toast(e.message)}}
 
 /* ---------- Étape 2 : demandes clients et distribution automatique ---------- */
 // Données réelles fournies par le backend (non branché pour l'instant : listes vides)
-const DB={reqs:[],pros:[],clients:[],missions:[],rates:{},retraits:[],litiges:[],support:[],journal:[]};
-const ST2={nouvelle:['Nouvelle','t-or'],distribuee:['Distribuée','t-bl'],acceptee:['Acceptée','t-ok'],refusee:['Refusée','t-ko'],expiree:['Expirée','t-ko'],annulee:['Annulée','t-ko']};
+const DB={reqs:[],pros:[],clients:[],missions:[],rates:{},retraits:[],litiges:[],support:[],journal:[],refunds:[],rateHist:[],zones:[],me:{},dash:null};
+// Valeurs nulles du tableau de bord tant que GET /dashboard n'a pas répondu
+const DASH0={clients:0,prosActive:0,prosPending:0,requestsTotal:0,requestsOpen:0,requestsToDistribute:0,missionsDone:0,missionsOngoing:0,disputesOpen:0,paid:0,commissions:0,payouts:0,withdrawalsPending:0,withdrawalsToProcess:0,dues:0,monthly:[]};
+DB.dash=DASH0;
+const ST2={nouvelle:['Nouvelle','t-or'],distribuee:['Distribuée','t-bl'],proposee:['Offres reçues','t-bl'],choisie:['Prestataire choisi','t-ok'],expiree:['Expirée','t-ko'],annulee:['Annulée','t-ko']};
+const URG={aujourdhui:"Aujourd'hui",semaine:'Cette semaine',libre:'Date libre'};
 let RF='toutes';
 const RULES=Object.assign({on:true,n:3,delay:10},JSON.parse(localStorage.getItem('ouv-admin-rules')||'{}'));
-const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const cnt=s=>DB.reqs.filter(r=>r.st==s).length;
 const saveRules=()=>localStorage.setItem('ouv-admin-rules',JSON.stringify(RULES));
 // Prestataires éligibles : vérifiés, disponibles, bon métier, bonne zone, classés par note
 const candidats=r=>DB.pros.filter(p=>p.verified&&!p.suspended&&p.dispo&&p.trades.includes(r.trade)&&p.zones.includes(r.zone)).sort((a,b)=>b.note-a.note);
-async function distribuer(id){try{const d=await api(`/admin/requests/${id}/distribute`,'POST');closeDlg();toast(`Demande envoyée à ${d.sent} prestataire(s)`);await loadAdmin();renderOps()}catch(e){toast(e.message)}}
+async function distribuer(id){try{const d=await api(`/requests/${id}/distribute`,'POST');closeDlg();toast(`Demande envoyée à ${d.sent} prestataire(s)`);await loadAdmin();renderOps()}catch(e){toast(e.message)}}
 // Sans réponse dans le délai : envoi au groupe suivant, sinon la demande expire
-function annuler(id){askMotif('Annuler la demande','Motif (3 caractères minimum)',async m=>{await api(`/admin/requests/${id}/cancel`,'POST',{motif:m});closeDlg();toast('Demande annulée');await loadAdmin();renderOps()})}
-function dlg(h){closeDlg();const s=document.createElement('div');s.className='scrim open';s.id='dscrim';s.onclick=closeDlg;const d=document.createElement('div');d.className='dlg';d.id='dlg';d.setAttribute('role','dialog');d.setAttribute('aria-modal','true');d.innerHTML=h;document.body.append(s,d)}
+function annuler(id){askMotif('Annuler la demande','Motif (3 caractères minimum)',async m=>{await api(`/requests/${id}/cancel`,'POST',{motif:m});closeDlg();toast('Demande annulée');await loadAdmin();renderOps()})}
+function dlg(h){closeDlg();const s=document.createElement('div');s.className='scrim open';s.id='dscrim';s.onclick=closeDlg;const d=document.createElement('div');d.className='dlg';d.id='dlg';d.setAttribute('role','dialog');d.setAttribute('aria-modal','true');d.innerHTML=h;document.body.append(s,d);anim.dlg(d,s)}
 function closeDlg(){['#dlg','#dscrim'].forEach(x=>{const e=$(x);e&&e.remove()})}
 function openReq(id){const r=DB.reqs.find(x=>x.id==id);if(!r)return;
  const sent=(r.sent||[]).map(pid=>DB.pros.find(p=>p.id==pid)).filter(Boolean);
- const act=r.st=='nouvelle'?`<button class="btn" onclick="distribuer('${r.id}')">Distribuer maintenant</button>`:'';
- const can=['nouvelle','distribuee'].includes(r.st)?`<button class="btn g" onclick="annuler('${r.id}')">Annuler la demande</button>`:'';
+ const act=['nouvelle','distribuee','proposee'].includes(r.st)?`<button class="btn" onclick="distribuer('${r.id}')">${r.st=='nouvelle'?'Distribuer maintenant':'Envoyer à d\'autres prestataires'}</button>`:'';
+ const can=['nouvelle','distribuee','proposee'].includes(r.st)?`<button class="btn g" onclick="annuler('${r.id}')">Annuler la demande</button>`:'';
  dlg(`<div class="row sp" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><b style="font-size:17px">Demande ${esc(r.ref)}</b><button class="ibtn" aria-label="Fermer" onclick="closeDlg()">✕</button></div>
- ${[['Client',r.client],['Métier',r.trade],['Zone',r.zone],['Adresse',r.addr],['Date souhaitée',r.date],['Type',r.mode=='devis'?'Demande de devis':'Réservation immédiate'],['Montant indicatif',r.price?money(r.price):'—'],['Statut',ST2[r.st][0]],['Prestataires notifiés',sent.length?sent.map(p=>esc(p.name)).join(', '):'Aucun pour le moment'],['Prestataires éligibles',candidats(r).length]].map(x=>`<div class="kv3"><span>${x[0]}</span><b>${esc(x[1])}</b></div>`).join('')}
- <p class="sub" style="border:0;padding:12px 0 0">${esc(r.desc)}</p>
+ ${[['Client',r.client],['Métier',r.trade],['Zone',r.zone],['Adresse',r.addr],['Reçue le',r.date],['Date souhaitée',r.desiredAt||'—'],['Urgence',URG[r.urgency]||r.urgency],['Offres reçues',r.offers],['Statut',ST2[r.st][0]],['Prestataires notifiés',sent.length?sent.map(p=>esc(p.name)).join(', '):'Aucun pour le moment'],['Prestataires éligibles',candidats(r).length]].map(x=>`<div class="kv3"><span>${x[0]}</span><b>${esc(x[1])}</b></div>`).join('')}
+ <p class="sub" style="border:0;padding:12px 0 0"><b style="color:var(--tx)">${esc(r.title)}</b><br>${esc(r.desc)}</p>
  <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">${can}${act}</div>`)}
 function renderOps(){
  const c=$('#content');
  if(P=='req'){
   $('#crumb').innerHTML='Tableau de bord › <b>Demandes clients</b>';
-  const tabs=[['toutes','Toutes',DB.reqs.length],['nouvelle','Nouvelles',cnt('nouvelle')],['distribuee','Distribuées',cnt('distribuee')],['acceptee','Acceptées',cnt('acceptee')],['refusee','Refusées',cnt('refusee')],['expiree','Expirées',cnt('expiree')]];
+  const tabs=[['toutes','Toutes',DB.reqs.length],...Object.keys(ST2).map(k=>[k,ST2[k][0],cnt(k)])];
   const L=DB.reqs.filter(r=>RF=='toutes'||r.st==RF).sort((a,b)=>b.createdAt-a.createdAt);
   c.innerHTML=`<div class="head"><div><h1>Demandes clients</h1><p>Demandes reçues des clients, à répartir entre les prestataires.</p></div></div>
-  <div class="kpis" style="grid-template-columns:repeat(3,1fr)">${kpi('Nouvelles',cnt('nouvelle'),'')}${kpi('Distribuées',cnt('distribuee'),'')}${kpi('Acceptées',cnt('acceptee'),'')}</div>
+  <div class="kpis" style="grid-template-columns:repeat(3,1fr)">${kpi('Nouvelles',cnt('nouvelle'),'')}${kpi('Distribuées',cnt('distribuee'),'')}${kpi('Prestataire choisi',cnt('choisie'),'')}</div>
   <div class="seg" role="tablist" style="display:inline-flex;flex-wrap:wrap;margin-bottom:14px">${tabs.map(t=>`<button role="tab" aria-selected="${RF==t[0]}" class="${RF==t[0]?'on':''}" onclick="RF='${t[0]}';renderOps()">${t[1]} <span style="color:var(--mu)">${t[2]}</span></button>`).join('')}</div>
-  <div class="card" style="padding:0;overflow:hidden"><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Réf.</th><th>Client</th><th>Métier</th><th>Zone</th><th>Date souhaitée</th><th>Type</th><th>Statut</th><th></th></tr></thead><tbody>${L.map(r=>`<tr><td>${esc(r.ref)}</td><td>${esc(r.client)}</td><td>${esc(r.trade)}</td><td>${esc(r.zone)}</td><td>${esc(r.date)}</td><td>${r.mode=='devis'?'Devis':'Immédiat'}</td><td><span class="tag ${ST2[r.st][1]}">${ST2[r.st][0]}</span></td><td><button class="btn g" style="padding:7px 12px" onclick="openReq('${r.id}')">Détail</button></td></tr>`).join('')||'<tr><td colspan="8" style="text-align:center;color:var(--mu);padding:30px">Aucune demande pour le moment.</td></tr>'}</tbody></table></div></div>`;
+  <div class="card" style="padding:0;overflow:hidden"><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Réf.</th><th>Client</th><th>Métier</th><th>Zone</th><th>Reçue le</th><th>Urgence</th><th>Statut</th><th></th></tr></thead><tbody>${L.map(r=>`<tr><td>${esc(r.ref)}</td><td>${esc(r.client)}</td><td>${esc(r.trade)}</td><td>${esc(r.zone)}</td><td>${esc(r.date)}</td><td>${esc(URG[r.urgency]||r.urgency)}</td><td><span class="tag ${ST2[r.st][1]}">${ST2[r.st][0]}</span></td><td><button class="btn g" style="padding:7px 12px" onclick="openReq('${r.id}')">Détail</button></td></tr>`).join('')||'<tr><td colspan="8" style="text-align:center;color:var(--mu);padding:30px">Aucune demande pour le moment.</td></tr>'}</tbody></table></div></div>`;
  } else {
   $('#crumb').innerHTML='Tableau de bord › <b>Distribution automatique</b>';
   const file=DB.reqs.filter(r=>r.st=='nouvelle');
@@ -272,14 +325,16 @@ let RV2='attente';
 const stOf=p=>p.status||'attente';
 const nbStat=s=>DB.pros.filter(p=>stOf(p)==s).length;
 // Décision de l'administrateur : pièces obligatoires avant validation, motif avant refus ou complément
-async function decider(id,st,motif){try{await api(`/admin/pros/${id}/decision`,'POST',{decision:st,motif:motif||undefined});closeDlg();toast('Décision enregistrée');await loadAdmin();renderValid()}catch(e){toast(e.message)}}
+async function decider(id,st,motif){try{await api(`/pros/${id}/decision`,'POST',{decision:st,motif:motif||undefined});closeDlg();toast('Décision enregistrée');await loadAdmin();renderValid()}catch(e){toast(e.message)}}
 async function openPro(id){const p=DB.pros.find(x=>x.id==id);if(!p)return;
- try{const d=await api('/admin/pros/'+id);const have=new Set(d.documents.map(x=>x.kind));p.docs={cni:have.has('cni'),naiss:have.has('naiss'),diplome:have.has('diplome')};p.zones=d.zones;p.bio=d.bio}catch(e){return toast(e.message)}
+ try{const d=await api('/pros/'+id);const have=new Set(d.documents.map(x=>x.kind));p.docs={cni:have.has('cni'),naiss:have.has('naiss'),diplome:have.has('diplome')};p.zones=d.zones;p.bio=d.bio}catch(e){return toast(e.message)}
  const doc=(k,l,req)=>{const ok=p.docs[k];return `<div class="kv3"><span>${l}${req?'':' (facultatif)'}</span><span style="display:flex;gap:10px;align-items:center"><b style="color:${ok?'var(--ok)':'var(--mu)'}">${ok?'✔ Reçu':'Non fourni'}</b>${ok?`<button class="btn g" style="padding:6px 10px" onclick="openDoc('${p.id}','${k}')">Voir</button>`:''}</span></div>`};
  dlg(`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><b style="font-size:17px">${esc(p.name)}</b><button class="ibtn" aria-label="Fermer" onclick="closeDlg()">✕</button></div>
+ ${[['Contact',p.contact],['Ville',p.city],['Inscrit le',p.dateFr],['Prix de base',p.basePrice?money(p.basePrice):'—'],['Missions terminées',p.missions]].map(x=>`<div class="kv3"><span>${x[0]}</span><b>${esc(x[1])}</b></div>`).join('')}
  <div class="kv3"><span>Métiers</span><b>${esc(p.trades.join(', '))}</b></div>
  <div class="kv3"><span>Zones</span><b>${esc((p.zones||[]).join(', '))}</b></div>
  <div class="kv3"><span>Statut</span><b><span class="tag ${VST[stOf(p)][1]}">${VST[stOf(p)][0]}</span></b></div>
+ ${p.bio?`<p class="sub" style="border:0;padding:10px 0 0">${esc(p.bio)}</p>`:''}
  <div class="lbl" style="margin:16px 0 4px"><span>Pièces</span></div>
  ${doc('cni',"Carte d'identité",1)}${doc('naiss','Extrait de naissance',1)}${doc('diplome','Justificatif professionnel',0)}
  <p class="sub" style="border:0;padding:10px 0 0">Chaque ouverture d'une pièce est journalisée.</p>
@@ -287,8 +342,8 @@ async function openPro(id){const p=DB.pros.find(x=>x.id==id);if(!p)return;
  <textarea class="fld" id="mo" rows="3"></textarea>
  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px"><button class="btn g" onclick="decider('${p.id}','refuse',$('#mo').value.trim())">Refuser</button><button class="btn g" onclick="decider('${p.id}','complement',$('#mo').value.trim())">Demander un complément</button><button class="btn" onclick="decider('${p.id}','valide','')">Valider le profil</button></div>`)}
 async function openDoc(id,kind){const w=window.open('about:blank','_blank');
- try{let r=await fetch(API+`/admin/pros/${id}/documents/${kind}`,{headers:{Authorization:'Bearer '+TOK},credentials:'same-origin'});
-  if(r.status===401&&await renew())r=await fetch(API+`/admin/pros/${id}/documents/${kind}`,{headers:{Authorization:'Bearer '+TOK},credentials:'same-origin'});
+ try{let r=await fetch(API+`/pros/${id}/documents/${kind}`,{headers:{Authorization:'Bearer '+TOK},credentials:'same-origin'});
+  if(r.status===401&&await renew())r=await fetch(API+`/pros/${id}/documents/${kind}`,{headers:{Authorization:'Bearer '+TOK},credentials:'same-origin'});
   if(!r.ok){const d=await r.json().catch(()=>null);throw new Error(msgOf(d))}
   const url=URL.createObjectURL(await r.blob());if(w)w.location=url;else toast('Autorisez les fenêtres pour ouvrir la pièce')}
  catch(e){if(w)w.close();toast(e.message)}}
@@ -302,20 +357,19 @@ function renderValid(){
  <div class="seg" role="tablist" style="display:inline-flex;flex-wrap:wrap;margin-bottom:14px">${tabs.map(t=>`<button role="tab" aria-selected="${RV2==t[0]}" class="${RV2==t[0]?'on':''}" onclick="RV2='${t[0]}';renderValid()">${t[1]} <span style="color:var(--mu)">${nbStat(t[0])}</span></button>`).join('')}</div>
  <div class="card" style="padding:0;overflow:hidden"><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Prestataire</th><th>Métiers</th><th>Zone</th><th>Pièces obligatoires</th><th>Statut</th><th></th></tr></thead><tbody>${L.map(p=>`<tr><td>${esc(p.name)}</td><td>${esc(p.trades.join(', '))}</td><td>${esc(p.zones.join(', '))}</td><td>${pieces(p)}/2</td><td><span class="tag ${VST[stOf(p)][1]}">${VST[stOf(p)][0]}</span></td><td><button class="btn g" style="padding:7px 12px" onclick="openPro('${p.id}')">Examiner</button></td></tr>`).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--mu);padding:30px">Aucun prestataire dans cette liste.</td></tr>'}</tbody></table></div></div>
  <div class="sec"><h2>Historique des décisions</h2></div>
- <div class="card">${DB.journal.slice(0,20).map(j=>`<div class="kv3"><div><b>${esc(j.action)}</b> · ${esc(j.pro)}${j.motif?`<div style="color:var(--mu);font-size:12.5px">${esc(j.motif)}</div>`:''}</div><span style="color:var(--mu);font-size:12px;white-space:nowrap">${esc(j.when)}</span></div>`).join('')||'<div class="empty" style="min-height:90px">Aucune décision pour le moment.</div>'}</div>`}
+ <div class="card">${DB.journal.filter(j=>j.action.startsWith('verification_')).slice(0,20).map(j=>`<div class="kv3 anim-row"><div><b>${esc(VLABEL[j.action.slice(13)]||j.action)}</b> · ${esc(j.pro)}${j.by?` <span style="color:var(--mu);font-size:12px">par ${esc(j.by)}</span>`:''}${j.motif?`<div style="color:var(--mu);font-size:12.5px">${esc(j.motif)}</div>`:''}</div><span style="color:var(--mu);font-size:12px;white-space:nowrap">${esc(j.when)}</span></div>`).join('')||'<div class="empty" style="min-height:90px">Aucune décision pour le moment.</div>'}</div>`}
 /* ---------- Étape 4 : gestion des clients et des prestataires ---------- */
 let PK='tous',PQ='';
 const isPro=k=>k=='pros';
 const listeOf=k=>isPro(k)?DB.pros:DB.clients;
 const estActif=(k,x)=>isPro(k)?(x.verified&&!x.suspended):!x.suspended;
 const etat=(k,x)=>x.suspended?['Suspendu','t-ko']:(estActif(k,x)?['Actif','t-ok']:['En attente','t-or']);
-async function suspendre(k,id,motif){try{await api(`/admin/users/${id}/suspend`,'POST',{motif});closeDlg();toast('Compte suspendu');await loadAdmin();renderPeople(k)}catch(e){toast(e.message)}}
-async function reactiver(k,id){try{await api(`/admin/users/${id}/reactivate`,'POST');closeDlg();toast('Compte réactivé');await loadAdmin();renderPeople(k)}catch(e){toast(e.message)}}
+async function suspendre(k,id,motif){try{await api(`/users/${id}/suspend`,'POST',{motif});closeDlg();toast('Compte suspendu');await loadAdmin();renderPeople(k)}catch(e){toast(e.message)}}
+async function reactiver(k,id){try{await api(`/users/${id}/reactivate`,'POST');closeDlg();toast('Compte réactivé');await loadAdmin();renderPeople(k)}catch(e){toast(e.message)}}
 function ouvrirCompte(k,id){const x=listeOf(k).find(y=>y.id==id);if(!x)return;
- const missions=isPro(k)?DB.reqs.filter(r=>(r.sent||[]).includes(x.id)).length:DB.reqs.filter(r=>r.client==x.name).length;
  const lignes=isPro(k)
-  ?[['Métiers',x.trades.join(', ')],['Zones',x.zones.join(', ')],['Note',x.note?x.note.toFixed(1)+' / 5':'Aucun avis'],['Demandes reçues',missions]]
-  :[['Contact',x.contact],['Ville',x.city],['Zone',x.zone||'—'],['Demandes',missions]];
+  ?[['Contact',x.contact],['Ville',x.city],['Métiers',x.trades.join(', ')],['Zones',x.zones.join(', ')],['Note',x.note?x.note.toFixed(1)+' / 5 ('+x.ratingCount+' avis)':'Aucun avis'],['Missions terminées',x.missions]]
+  :[['Contact',x.contact],['Ville',x.city],['Zone',x.zone||'—'],['Demandes',x.requests],['Réservations',x.bookings]];
  dlg(`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><b style="font-size:17px">${esc(x.name)}</b><button class="ibtn" aria-label="Fermer" onclick="closeDlg()">✕</button></div>
  <div class="kv3"><span>Statut</span><b><span class="tag ${etat(k,x)[1]}">${etat(k,x)[0]}</span></b></div>
  ${lignes.map(l=>`<div class="kv3"><span>${l[0]}</span><b>${esc(l[1])}</b></div>`).join('')}
@@ -344,14 +398,14 @@ const MGROUPE={en:['attente','demande_devis','devis_propose','a_payer','payee','
 const MANNULABLE=['attente','demande_devis','devis_propose','a_payer','payee','en_cours'];
 let MG='en';
 // Annulation par l'administrateur : motif obligatoire, historisée ; une mission payée passe en remboursement à traiter
-async function annulerMission(id,motif){try{await api(`/admin/bookings/${id}/cancel`,'POST',{motif});closeDlg();toast('Mission annulée');await loadAdmin();renderMissions(P)}catch(e){toast(e.message)}}
+async function annulerMission(id,motif){try{await api(`/bookings/${id}/cancel`,'POST',{motif});closeDlg();toast('Mission annulée');await loadAdmin();renderMissions(P)}catch(e){toast(e.message)}}
 function ouvrirMission(id){const m=DB.missions.find(x=>x.id==id);if(!m)return;
  const etapes=['Demande reçue','Prestataire confirmé','Payée','Travaux démarrés','Fin signalée','Confirmée par le client'];
- const rang={attente:0,demande_devis:0,devis_propose:1,a_payer:1,payee:2,en_cours:3,fin_signalee:4,terminee:5};
+ const rang={attente:0,demande_devis:0,devis_propose:1,a_payer:1,payee:2,en_cours:3,fin_signalee:4,litige:4,terminee:5};
  const r=rang[m.st];
  dlg(`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><b style="font-size:17px">Mission ${esc(m.ref)}</b><button class="ibtn" aria-label="Fermer" onclick="closeDlg()">✕</button></div>
  <div class="kv3"><span>Statut</span><b><span class="tag ${MST[m.st][1]}">${MST[m.st][0]}</span></b></div>
- ${[['Client',m.client],['Prestataire',m.pro],['Métier',m.trade],['Zone',m.zone],['Adresse',m.addr],['Date souhaitée',m.date],['Type',m.mode=='devis'?'Devis':'Réservation immédiate'],['Montant',m.price?money(m.price):'À définir']].map(x=>`<div class="kv3"><span>${x[0]}</span><b>${esc(x[1])}</b></div>`).join('')}
+ ${[['Client',m.client],['Prestataire',m.pro],['Métier',m.trade],['Adresse',m.addr],['Créée le',m.date],['Date prévue',m.scheduled||'—'],['Type',m.mode=='devis'?'Devis':'Réservation immédiate'],['Montant',m.price?money(m.price):'À définir']].map(x=>`<div class="kv3"><span>${x[0]}</span><b>${esc(x[1])}</b></div>`).join('')}
  <div class="lbl" style="margin:16px 0 4px"><span>Avancement</span></div>
  ${etapes.map((e,i)=>`<div class="kv3"><span>${i+1}. ${e}</span><b style="color:${r!=null&&i<=r?'var(--ok)':'var(--mu)'}">${r!=null&&i<=r?'✔':'—'}</b></div>`).join('')}
  ${m.remboursement?'<p class="sub" style="border:0;color:var(--ko)">Remboursement à traiter (voir Finances).</p>':''}
@@ -382,44 +436,41 @@ const prosNoms=()=>[...new Set([...DB.missions.map(m=>m.pro),...DB.retraits.map(
 const soldeBrut=n=>DB.missions.filter(m=>m.pro==n&&m.st=='terminee').reduce((a,m)=>a+net(m),0);
 const retire=n=>DB.retraits.filter(r=>r.pro==n&&RET_ACT.includes(r.st)).reduce((a,r)=>a+r.montant,0);
 const soldeDispo=n=>soldeBrut(n)-retire(n);
-function totaux(){const P=DB.missions;
- return {paye:P.filter(aPayer).reduce((a,m)=>a+(m.price||0),0),
-  commissions:P.filter(aPayer).reduce((a,m)=>a+comm(m),0),
-  dues:prosNoms().reduce((a,n)=>a+Math.max(0,soldeDispo(n)),0),
-  verses:DB.retraits.filter(r=>r.st=='verse').reduce((a,r)=>a+r.montant,0)}}
 function statutFin(m){if(m.rembourse)return['Remboursé','t-ok'];if(m.st=='annulee'&&m.remboursement)return['Remboursement à traiter','t-ko'];if(m.st=='terminee')return['Confirmée · disponible au retrait','t-ok'];return['Payé, travaux en cours','t-bl']}
 let FF='tous';
-async function rembourser(id){try{await api(`/admin/payments/${id}/refunded`,'POST');toast('Remboursement enregistré');await loadAdmin();renderFin('fin')}catch(e){toast(e.message)}}
+async function rembourser(id){try{await api(`/bookings/${id}/refunded`,'POST');toast('Remboursement enregistré');await loadAdmin();renderFin('fin')}catch(e){toast(e.message)}}
 function renderFin(k){
  if(k=='com')return renderCom();
  $('#crumb').innerHTML='Tableau de bord › <b>Finances et transactions</b>';
- const t=totaux();
+ const t=DB.dash;
  let L=DB.missions.filter(m=>estPaye(m)||m.remboursement);
  if(FF=='confirmees')L=L.filter(m=>m.st=='terminee');
  if(FF=='remb')L=L.filter(m=>m.remboursement||m.rembourse);
  $('#content').innerHTML=`<div class="head"><div><h1>Finances et transactions</h1><p>Paiements reçus, commissions et soldes des prestataires. Les versements se font par retrait.</p></div></div>
- <div class="fin">${kpi('Total payé par les clients',fmt(t.paye),'FCFA')}${kpi('Commissions Ouvrage',fmt(t.commissions),'FCFA')}${kpi('Soldes dus aux pros',fmt(t.dues),'FCFA')}${kpi('Versements effectués',fmt(t.verses),'FCFA')}</div>
+ <div class="fin">${kpi('Total payé par les clients',t.paid,'FCFA')}${kpi('Commissions Ouvrage',t.commissions,'FCFA')}${kpi('Soldes dus aux pros',t.dues,'FCFA')}${kpi('Versements effectués',t.payouts,'FCFA')}</div>
  <div class="seg" role="tablist" style="display:inline-flex;flex-wrap:wrap;margin-bottom:14px">${[['tous','Toutes'],['confirmees','Prestations confirmées'],['remb','Remboursements']].map(x=>`<button role="tab" aria-selected="${FF==x[0]}" class="${FF==x[0]?'on':''}" onclick="FF='${x[0]}';renderFin('fin')">${x[1]}</button>`).join('')}</div>
- <div class="card" style="padding:0;overflow:hidden"><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Réf.</th><th>Client</th><th>Prestataire</th><th>Montant</th><th>Commission</th><th>Part prestataire</th><th>Statut</th><th></th></tr></thead><tbody>${L.map(m=>{const s=statutFin(m);const act=(m.remboursement&&!m.rembourse)?`<button class="btn g" style="padding:7px 12px" onclick="rembourser('${m.id}')">Rembourser</button>`:'';
-  return `<tr><td>${esc(m.ref)}</td><td>${esc(m.client)}</td><td>${esc(m.pro)}</td><td>${fmt(m.price||0)} FCFA</td><td>${fmt(comm(m))} FCFA <span style="color:var(--mu);font-size:12px">(${taux(m)} %)</span></td><td>${fmt(net(m))} FCFA</td><td><span class="tag ${s[1]}">${s[0]}</span></td><td>${act}</td></tr>`}).join('')||'<tr><td colspan="8" style="text-align:center;color:var(--mu);padding:30px">Aucune transaction pour le moment.</td></tr>'}</tbody></table></div></div>`}
+ ${FF=='remb'?refundsTable():`<div class="card" style="padding:0;overflow:hidden"><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Réf.</th><th>Client</th><th>Prestataire</th><th>Montant</th><th>Commission</th><th>Part prestataire</th><th>Statut</th><th></th></tr></thead><tbody>${L.map(m=>{const s=statutFin(m);const act=(m.remboursement&&!m.rembourse)?`<button class="btn g" style="padding:7px 12px" onclick="rembourser('${m.id}')">Rembourser</button>`:'';
+  return `<tr><td>${esc(m.ref)}</td><td>${esc(m.client)}</td><td>${esc(m.pro)}</td><td>${fmt(m.price||0)} FCFA</td><td>${fmt(comm(m))} FCFA <span style="color:var(--mu);font-size:12px">(${taux(m)} %)</span></td><td>${fmt(net(m))} FCFA</td><td><span class="tag ${s[1]}">${s[0]}</span></td><td>${act}</td></tr>`}).join('')||'<tr><td colspan="8" style="text-align:center;color:var(--mu);padding:30px">Aucune transaction pour le moment.</td></tr>'}</tbody></table></div></div>`}`}
+// Remboursements (GET /refunds) : à effectuer, puis effectués
+function refundsTable(){const RS={refund_pending:['Remboursement à traiter','t-ko'],refunded:['Remboursé','t-ok']};
+ return `<div class="card" style="padding:0;overflow:hidden"><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Réf.</th><th>Client</th><th>Montant</th><th>Moyen de paiement</th><th>Mis à jour le</th><th>Statut</th><th></th></tr></thead><tbody>${DB.refunds.map(r=>`<tr><td>${esc(r.ref)}</td><td>${esc(r.client)}</td><td>${money(r.amount)}</td><td>${esc(r.method)}</td><td>${esc(dateFr(r.date))}</td><td><span class="tag ${(RS[r.status]||['',''])[1]}">${esc((RS[r.status]||[r.status])[0])}</span></td><td>${r.status=='refund_pending'?`<button class="btn g" style="padding:7px 12px" onclick="rembourser('${r.bookingId}')">Marquer remboursé</button>`:''}</td></tr>`).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--mu);padding:30px">Aucun remboursement.</td></tr>'}</tbody></table></div></div>`}
 function renderCom(){
  $('#crumb').innerHTML='Tableau de bord › <b>Commissions</b>';
- const hist=DB.journal.filter(j=>j.action.startsWith('Taux'));
  $('#content').innerHTML=`<div class="head"><div><h1>Commissions</h1><p>Taux de commission par catégorie de métier. Le taux est figé quand le prix est accepté : une modification ne touche pas les missions déjà conclues.</p></div></div>
  <div class="two"><div class="card"><div class="lbl"><span>Taux par catégorie</span></div>
  <div style="margin-top:12px">${TRADES.map(t=>`<div class="kv3" style="align-items:center"><span style="color:var(--tx)">${esc(t)}</span><span style="display:flex;align-items:center;gap:8px"><input class="fld" style="width:90px;margin:0" type="number" min="0" max="50" step="0.5" aria-label="Taux ${esc(t)}" data-trade="${esc(t)}" value="${DB.rates[t]??15}"> %</span></div>`).join('')}</div>
  <button class="btn" style="margin-top:14px" onclick="saveTaux()">Enregistrer les taux</button></div>
  <div class="card"><div class="lbl"><span>Exemple de répartition</span></div><div style="margin-top:12px"><div class="kv3"><span>Montant payé par le client</span><b>50 000 FCFA</b></div><div class="kv3"><span>Commission Ouvrage (15 %)</span><b>7 500 FCFA</b></div><div class="kv3"><span>Part du prestataire (85 %)</span><b>42 500 FCFA</b></div></div>
- <div class="sec" style="margin-top:18px"><h2>Historique des taux</h2></div>${hist.map(j=>`<div class="kv3"><div><b>${esc(j.pro)}</b><div style="color:var(--mu);font-size:12.5px">${esc(j.motif)}</div></div><span style="color:var(--mu);font-size:12px;white-space:nowrap">${esc(j.when)}</span></div>`).join('')||'<div class="empty" style="min-height:70px">Aucune modification de taux.</div>'}</div></div>`}
+ <div class="sec" style="margin-top:18px"><h2>Historique des taux</h2></div>${DB.rateHist.map(h=>`<div class="kv3 anim-row"><div><b>${esc(h.trade)}</b><div style="color:var(--mu);font-size:12.5px">${h.from==null?'—':esc(h.from)+' %'} → ${esc(h.to)} %</div></div><span style="color:var(--mu);font-size:12px;white-space:nowrap">${esc(new Date(h.date).toLocaleString('fr-FR'))}</span></div>`).join('')||'<div class="empty" style="min-height:70px">Aucune modification de taux.</div>'}</div></div>`}
 async function saveTaux(){const rates=[];document.querySelectorAll('input[data-trade]').forEach(i=>{const t=i.dataset.trade,v=+i.value;if(v!==(DB.rates[t]??15))rates.push({trade:t,rate:v})});
  if(!rates.length)return toast('Aucun changement');
- try{await api('/admin/rates','PUT',{rates});await loadAdmin();toast(`${rates.length} taux modifié(s)`);renderCom()}catch(e){toast(e.message)}}
+ try{await api('/rates','PUT',{rates});await loadAdmin();toast(`${rates.length} taux modifié(s)`);renderCom()}catch(e){toast(e.message)}}
 /* ---------- Étape 7 : retraits, litiges et rapports ---------- */
 const RST={demande:['Demandé','t-or'],en_cours:['En cours de virement','t-bl'],verse:['Viré','t-ok'],rejete:['Rejeté','t-ko']};
 let RTF='demande';
 // Retrait : le montant ne peut pas dépasser le solde ; il est bloqué dès la demande
 async function retraitAction(id,action,motif){const path={encours:'start',verse:'paid',rejete:'reject'}[action];if(!path)return;
- try{await api(`/admin/withdrawals/${id}/${path}`,'POST',action==='rejete'?{motif}:undefined);closeDlg();toast('Retrait mis à jour');await loadAdmin();renderRet()}catch(e){toast(e.message)}}
+ try{await api(`/withdrawals/${id}/${path}`,'POST',action==='rejete'?{motif}:undefined);closeDlg();toast('Retrait mis à jour');await loadAdmin();renderRet()}catch(e){toast(e.message)}}
 function ouvrirRetrait(id){const r=DB.retraits.find(x=>x.id==id);if(!r)return;
  dlg(`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><b style="font-size:17px">Retrait ${esc(r.ref)}</b><button class="ibtn" aria-label="Fermer" onclick="closeDlg()">✕</button></div>
  ${[['Prestataire',r.pro],['Montant',fmt(r.montant)+' FCFA'],['Moyen',r.moyen],['Numéro ou compte',r.numero],['Demandé le',r.date],['Solde disponible',fmt(Math.max(0,soldeDispo(r.pro)))+' FCFA'],['Statut',RST[r.st][0]]].map(x=>`<div class="kv3"><span>${x[0]}</span><b>${esc(x[1])}</b></div>`).join('')}
@@ -438,7 +489,7 @@ function renderRet(){
 // Litige : l'administrateur tranche ; le remboursement ou le paiement au prestataire suit la décision
 const LST={ouvert:['Ouvert','t-or'],resolu:['Résolu','t-ok']};
 let LTF='ouvert';
-async function trancher(id,dec,motif){try{await api(`/admin/disputes/${id}/decide`,'POST',{decision:dec,motif});closeDlg();toast('Décision enregistrée');await loadAdmin();renderLit()}catch(e){toast(e.message)}}
+async function trancher(id,dec,motif){try{await api(`/disputes/${id}/decide`,'POST',{decision:dec,motif});closeDlg();toast('Décision enregistrée');await loadAdmin();renderLit()}catch(e){toast(e.message)}}
 function ouvrirLitige(id){const l=DB.litiges.find(x=>x.id==id);if(!l)return;
  dlg(`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><b style="font-size:17px">Litige ${esc(l.ref)}</b><button class="ibtn" aria-label="Fermer" onclick="closeDlg()">✕</button></div>
  ${[['Mission',l.mission],['Client',l.client],['Prestataire',l.pro],['Motif du litige',l.type],['Ouvert le',l.date],['Statut',LST[l.st][0]]].map(x=>`<div class="kv3"><span>${x[0]}</span><b>${esc(x[1])}</b></div>`).join('')}
@@ -456,22 +507,17 @@ function renderLit(){
 // Rapports : chiffres calculés à partir des données réelles
 function renderRap(){
  $('#crumb').innerHTML='Tableau de bord › <b>Rapports</b>';
- const M=DB.missions,t=totaux();
- const zones=[...new Set([...DB.reqs.map(r=>r.zone),...M.map(m=>m.zone)].filter(Boolean))];
- const lignes=zones.map(z=>({z,dem:DB.reqs.filter(r=>r.zone==z).length,mis:M.filter(m=>m.zone==z&&m.st=='terminee').length,ca:M.filter(m=>m.zone==z&&aPayer(m)).reduce((a,m)=>a+(m.price||0),0)}));
- window.RAPPORT=lignes;
- $('#content').innerHTML=`<div class="head"><div><h1>Rapports</h1><p>Activité par zone et par métier, à partir des comptes et des missions.</p></div><div class="sp"><button class="btn g" onclick="exportRapport()">⬇ Exporter CSV</button></div></div>
- <div class="kpis">${kpi('Clients inscrits',DB.clients.length,'')}${kpi('Prestataires actifs',DB.pros.filter(p=>p.verified&&!p.suspended).length,'')}${kpi('Demandes reçues',DB.reqs.length,'')}${kpi('Chiffre d\'affaires',fmt(t.paye),'FCFA')}</div>
+ const M=DB.missions,t=DB.dash;
+ const lignes=DB.zones.map(z=>({z:z.zone,dem:z.requests,mis:z.completed,ca:z.revenue}));
+ $('#content').innerHTML=`<div class="head"><div><h1>Rapports</h1><p>Activité par zone et par métier, à partir des comptes et des missions.</p></div><div class="sp"><button class="btn g" onclick="exportCsv()">⬇ Exporter CSV</button></div></div>
+ <div class="kpis">${kpi('Clients inscrits',t.clients,'')}${kpi('Prestataires actifs',t.prosActive,'')}${kpi('Demandes reçues',t.requestsTotal,'')}${kpi('Chiffre d\'affaires',t.paid,'FCFA')}</div>
  <div class="two"><div class="card" style="padding:0;overflow:hidden"><div style="padding:16px 18px" class="lbl"><span>Par zone</span></div><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Zone</th><th>Demandes</th><th>Missions terminées</th><th>Chiffre d'affaires</th></tr></thead><tbody>${lignes.map(l=>`<tr><td>${esc(l.z)}</td><td>${l.dem}</td><td>${l.mis}</td><td>${fmt(l.ca)} FCFA</td></tr>`).join('')||'<tr><td colspan="4" style="text-align:center;color:var(--mu);padding:30px">Aucune donnée pour le moment.</td></tr>'}</tbody></table></div></div>
  <div class="card"><div class="lbl"><span>Missions terminées par métier</span></div><div style="margin-top:10px">${TRADES.map(x=>`<div class="kv3"><span>${esc(x)}</span><b>${M.filter(m=>m.trade==x&&m.st=='terminee').length}</b></div>`).join('')}</div></div></div>`}
-function exportRapport(){const L=window.RAPPORT||[];if(!L.length)return toast('Aucune donnée à exporter');
- const csv=['Zone;Demandes;Missions terminées;Chiffre d\'affaires (FCFA)',...L.map(l=>[l.z,l.dem,l.mis,l.ca].join(';'))].join('\n');
- const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'}));a.download='rapport-ouvrage.csv';a.click()}
 /* ---------- Support clients : fils de discussion et réponses ---------- */
 // Chaque fil correspond à un client. Les données viennent du backend (GET /v1/admin/support/:userId) une fois l'administration connectée.
 let SUP_SEL=null;
 async function selectSupport(id){SUP_SEL=id;
- try{const d=await api('/admin/support/'+id);const f=DB.support.find(x=>x.id==id);if(f)f.messages=d.items.map(m=>({sender:m.sender,body:m.body,date:new Date(m.date).toLocaleString('fr-FR')}))}catch(e){toast(e.message)}
+ try{const d=await api('/support/'+id);const f=DB.support.find(x=>x.id==id);if(f)f.messages=d.items.map(m=>({sender:m.sender,body:m.body,date:new Date(m.date).toLocaleString('fr-FR')}))}catch(e){toast(e.message)}
  renderSupport()}
 function renderSupport(){
  $('#crumb').innerHTML='Tableau de bord › <b>Support clients</b>';
@@ -480,44 +526,58 @@ function renderSupport(){
  const f=fils.find(x=>x.id==SUP_SEL);
  $('#content').innerHTML=`<div class="head"><div><h1>Support clients</h1><p>Messages envoyés par les clients et réponses de l'équipe Ouvrage. La réponse est aussi envoyée en notification au client.</p></div></div>
  <div class="two" style="grid-template-columns:minmax(220px,1fr) 2fr;align-items:start">
-  <div class="card" style="padding:0;overflow:hidden">${fils.map(x=>`<div class="kv3" role="button" tabindex="0" aria-current="${x.id==SUP_SEL}" style="padding:12px 14px;cursor:pointer;${x.id==SUP_SEL?'background:#ff6a1520':''}" onclick="selectSupport('${x.id}')"><div><b>${esc(x.name)}</b><div class="mu" style="font-size:12px">${esc(x.last)}</div></div></div>`).join('')||'<div class="empty" style="min-height:120px;border:0">Aucun message de client pour le moment.</div>'}</div>
+  <div class="card" style="padding:0;overflow:hidden">${fils.map(x=>`<div class="kv3" role="button" tabindex="0" aria-current="${x.id==SUP_SEL}" style="padding:12px 14px;cursor:pointer;${x.id==SUP_SEL?'background:#ff6a1520':''}" onclick="selectSupport('${x.id}')"><div><b>${esc(x.name)}</b><div class="mu" style="font-size:12px">${esc(x.last)}</div></div>${x.awaiting?'<span class="tag t-or">À répondre</span>':''}</div>`).join('')||'<div class="empty" style="min-height:120px;border:0">Aucun message de client pour le moment.</div>'}</div>
   <div class="card">${f?`<div class="lbl"><span>${esc(f.name)}</span></div>
    <div style="margin:12px 0;display:flex;flex-direction:column;gap:8px;max-height:320px;overflow:auto">${f.messages.map(m=>`<div style="align-self:${m.sender=='support'?'flex-end':'flex-start'};max-width:80%;background:${m.sender=='support'?'#ff6a13':'#1b1b20'};padding:9px 12px;border-radius:14px"><div style="white-space:pre-wrap">${esc(m.body)}</div><div style="font-size:11px;opacity:.7;margin-top:3px">${m.sender=='support'?'Équipe Ouvrage':'Client'} · ${esc(m.date)}</div></div>`).join('')}</div>
    <label class="l" for="supR">Votre réponse</label><textarea class="fld" id="supR" rows="3" maxlength="2000" placeholder="Écrivez votre réponse au client"></textarea>
    <button class="btn" onclick="repondreSupport('${f.id}')">Envoyer la réponse</button>`:'<div class="empty">Sélectionnez une conversation.</div>'}</div></div>`}
 async function repondreSupport(id){const t=$('#supR').value.trim();if(!t)return toast('Écrivez une réponse');
- try{await api(`/admin/support/${id}/messages`,'POST',{body:t});toast('Réponse envoyée');await selectSupport(id)}catch(e){toast(e.message)}}
+ try{await api(`/support/${id}/messages`,'POST',{body:t});toast('Réponse envoyée');await selectSupport(id)}catch(e){toast(e.message)}}
 /* ---------- Données : chargées depuis l'API à la connexion, rechargées après chaque action ---------- */
 const ST_REQ=['nouvelle','distribuee','proposee','choisie','annulee','expiree'];
 const dateFr=d=>new Date(d).toLocaleDateString('fr-FR');
 async function loadAdmin(){
- const [reqs,pros,clients,bk,dis,ret,rates,sup,audit]=await Promise.all([
-  Promise.all(ST_REQ.map(x=>api('/admin/requests?status='+x))),
-  api('/admin/pros'),api('/admin/clients'),
-  Promise.all(['en','ter','ann'].map(g=>api('/admin/bookings?group='+g))),
-  Promise.all(['ouvert','resolu'].map(x=>api('/admin/disputes?status='+x))),
-  Promise.all(['demande','en_cours','verse','rejete'].map(x=>api('/admin/withdrawals?status='+x))),
-  api('/admin/rates'),api('/admin/support'),api('/admin/audit?limit=100')]);
- DB.reqs=reqs.flatMap(x=>x.items).map(r=>({id:r.id,ref:r.ref,client:r.client,trade:r.trade,title:r.title,desc:r.description,addr:r.address,zone:r.zone,urgency:r.urgency,mode:'demande',date:dateFr(r.date),price:0,st:r.status,sent:r.sent||[],createdAt:Date.parse(r.date)||0}));
- DB.pros=pros.items.map(p=>({id:p.id,name:p.name,city:p.city,contact:p.contact,trades:p.trades||[],zones:[],verified:p.verification==='valide',dispo:p.available,note:p.rating||0,suspended:p.status==='suspended',status:p.verification,submittedAt:0,docs:null,motif:''}));
- DB.clients=clients.items.map(c=>({id:c.id,name:c.name,city:c.city,contact:c.contact,zone:'',createdAt:Date.parse(c.date)||0,suspended:c.status==='suspended',motif:''}));
- DB.missions=bk.flatMap(x=>x.items).map(b=>({id:b.id,ref:b.ref,client:b.client,pro:b.pro,trade:b.trade,zone:'',price:b.price||0,st:b.status,mode:b.mode,createdAt:Date.parse(b.date)||0,taux:b.commissionRate??undefined,remboursement:b.payment==='refund_pending'||b.payment==='refunded',rembourse:b.payment==='refunded',motif:''}));
- DB.litiges=dis.flatMap(x=>x.items).map(d=>({id:d.id,ref:'LIT-'+d.id,mission:d.ref,client:d.client,pro:d.pro,type:d.type,description:d.description,date:dateFr(d.date),createdAt:Date.parse(d.date)||0,st:d.status,decision:d.decision}));
+ const [reqs,pros,clients,bk,dis,ret,rates,sup,audit,refunds,dash,zones,me]=await Promise.all([
+  Promise.all(ST_REQ.map(x=>api('/requests?status='+x))),
+  api('/pros?status=tous'),api('/clients'),
+  Promise.all(['en','ter','ann'].map(g=>api('/bookings?group='+g))),
+  Promise.all(['ouvert','resolu'].map(x=>api('/disputes?status='+x))),
+  Promise.all(['demande','en_cours','verse','rejete'].map(x=>api('/withdrawals?status='+x))),
+  api('/rates'),api('/support'),api('/audit?limit=100'),api('/refunds'),api('/dashboard'),api('/reports/zones'),api('/me')]);
+ const dt=d=>d?new Date(d).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'}):'';
+ DB.reqs=reqs.flatMap(x=>x.items).map(r=>({id:r.id,ref:r.ref,client:r.client,trade:r.trade,title:r.title,desc:r.description,addr:r.address,zone:r.zone,urgency:r.urgency,desiredAt:dt(r.desiredAt),offers:r.offers||0,date:dateFr(r.date),st:r.status,sent:r.sent||[],createdAt:Date.parse(r.date)||0}));
+ DB.pros=pros.items.map(p=>({id:p.id,name:p.name,city:p.city,contact:p.contact,trades:p.trades||[],zones:p.zones||[],verified:p.verification==='valide',dispo:p.available,note:p.rating||0,ratingCount:p.ratingCount||0,missions:p.missions||0,basePrice:p.basePrice||0,suspended:p.status==='suspended',status:p.verification,submittedAt:Date.parse(p.date)||0,dateFr:dateFr(p.date),docs:{cni:p.documents.includes('cni'),naiss:p.documents.includes('naiss'),diplome:p.documents.includes('diplome')},motif:''}));
+ DB.clients=clients.items.map(c=>({id:c.id,name:c.name,city:c.city,contact:c.contact,zone:c.zone||'',requests:c.requests||0,bookings:c.bookings||0,createdAt:Date.parse(c.date)||0,suspended:c.status==='suspended',motif:''}));
+ const RB=Object.fromEntries(refunds.items.map(r=>[r.bookingId,r.status]));
+ DB.missions=bk.flatMap(x=>x.items).map(b=>{const rf=RB[b.id]||b.payment;return {id:b.id,ref:b.ref,client:b.client,pro:b.pro,trade:b.trade,service:b.service,addr:b.address,scheduled:dt(b.scheduledAt),price:b.price||0,st:b.status,mode:b.mode,date:dateFr(b.date),createdAt:Date.parse(b.date)||0,taux:b.commissionRate??undefined,remboursement:rf==='refund_pending'||rf==='refunded',rembourse:rf==='refunded',motif:''}});
+ DB.refunds=refunds.items;
+ DB.litiges=dis.flatMap(x=>x.items).map(d=>({id:d.id,ref:'LIT-'+d.id,mission:d.ref,client:d.client,pro:d.pro,type:d.type,description:d.description,date:dateFr(d.date),createdAt:Date.parse(d.date)||0,st:d.status,decision:d.decision,motif:d.motif}));
  DB.retraits=ret.flatMap(x=>x.items).map(w=>({id:w.id,ref:w.ref,pro:w.pro,proId:w.proId,montant:w.amount,moyen:w.method,numero:w.number,st:w.status,motif:w.reason,date:dateFr(w.date),createdAt:Date.parse(w.date)||0}));
  DB.rates=Object.fromEntries(rates.items.map(r=>[r.trade,r.rate]));
- DB.support=sup.items.map(t=>({id:t.id,name:t.name,last:t.last||'',lastAt:Date.parse(t.date)||0,messages:[]}));
- DB.journal=audit.items.map(a=>({when:new Date(a.date).toLocaleString('fr-FR'),pro:a.entity+' #'+a.entityId,action:a.action,motif:''}));
+ DB.rateHist=rates.history||[];
+ DB.support=sup.items.map(t=>({id:t.id,name:t.name,last:t.last||'',awaiting:!!t.awaitingReply,count:t.messages||0,lastAt:Date.parse(t.date)||0,messages:(DB.support.find(o=>o.id==t.id)||{}).messages||[]}));
+ const proName=id=>{const x=DB.pros.find(p=>String(p.id)===String(id));return x?x.name:'Prestataire #'+id};
+ DB.journal=audit.items.map(a=>({when:new Date(a.date).toLocaleString('fr-FR'),pro:a.entity==='user'?proName(a.entityId):a.entity+' #'+a.entityId,by:a.actorName||'',action:a.action,motif:(a.meta&&a.meta.motif)||''}));
+ DB.dash=dash;DB.zones=zones.items;DB.me=me;
+ const ini=((me.firstName||'')[0]||'')+((me.lastName||'')[0]||'');
+ $('.me .av').textContent=(ini||'OA').toUpperCase();$('.me b').textContent=[me.firstName,me.lastName].filter(Boolean).join(' ')||'Administrateur';$('.me small').textContent=me.contact||'Ouvrage';
+ renderNotifs();
 }
-function resetAdmin(){Object.assign(DB,{reqs:[],pros:[],clients:[],missions:[],rates:{},retraits:[],litiges:[],support:[],journal:[]})}
+// Cloche : tâches en attente, tirées du tableau de bord et du support (pas de notifications admin côté serveur)
+function renderNotifs(){const d=DB.dash;if(!d)return;
+ const L=[[d.requestsToDistribute,'demande(s) à distribuer','dist'],[d.prosPending,'prestataire(s) à valider','valid'],[d.disputesOpen,'litige(s) ouvert(s)','lit'],[d.withdrawalsToProcess,'retrait(s) à traiter','ret'],[DB.refunds.filter(r=>r.status==='refund_pending').length,'remboursement(s) à effectuer','fin'],[DB.support.filter(x=>x.awaiting).length,'conversation(s) en attente de réponse','sup']].filter(x=>x[0]>0);
+ $('#np').innerHTML='<b>À traiter</b>'+(L.length?L.map(x=>`<div class="kv3 anim-row" role="button" tabindex="0" style="cursor:pointer" onclick="${x[2]=='fin'?"FF='remb';":''}go('${x[2]}')"><span>${esc(x[1])}</span><b>${x[0]}</b></div>`).join(''):'<p class="sub" style="margin-top:10px;border:0;padding:0">Rien à traiter pour le moment.</p>');
+ $('#bell').setAttribute('aria-label','Notifications'+(L.length?' : '+L.length+' rubrique(s) à traiter':''))}
+function resetAdmin(){Object.assign(DB,{reqs:[],pros:[],clients:[],missions:[],rates:{},retraits:[],litiges:[],support:[],journal:[],refunds:[],rateHist:[],zones:[],me:{},dash:DASH0})}
 function askMotif(title,hint,cb){dlg(`<b style="font-size:17px">${esc(title)}</b><p class="mu" style="margin:6px 0 12px">${esc(hint)}</p><textarea class="fld" id="am" rows="3" aria-label="Motif"></textarea><button class="btn" id="amok">Confirmer</button>`);
  $('#amok').onclick=async()=>{const v=$('#am').value.trim();if(!v)return toast('Motif requis');try{await cb(v)}catch(e){toast(e.message)}}}
 
 /* ---------- Connexion : mot de passe, puis code de double authentification ---------- */
 // Le tableau de bord est servi par le backend de l'administration (même domaine). Le jeton d'accès reste en mémoire ;
 // le jeton de rafraîchissement est dans la session du navigateur, effacé à la fermeture de l'onglet.
-const API='/api/v1';
+const API='/api/v1/admin';
 let TOK=null;
-let LOGIN={contact:'',password:'',step:1,mode:'login',name:''};
+let LOGIN={contact:'',password:'',step:1},LOGIN_SHOWN=0;
 async function apiRaw(path,method='GET',body){const h={'Content-Type':'application/json'};if(TOK)h.Authorization='Bearer '+TOK;
  const r=await fetch(API+path,{method,headers:h,body:body===undefined?undefined:JSON.stringify(body),credentials:'same-origin'});
  const data=r.status===204?null:await r.json().catch(()=>null);return {ok:r.ok,status:r.status,data}}
@@ -529,44 +589,25 @@ async function renew(){const rt=sessionStorage.getItem('ouv-admin-rt');if(!rt)re
 async function api(path,method,body){let r=await apiRaw(path,method,body);if(r.status===401&&await renew())r=await apiRaw(path,method,body);
  if(!r.ok)throw new Error(msgOf(r.data));return r.data}
 
+// Pas d'inscription en ligne : les comptes administrateur se créent sur le serveur (npm run create-admin)
 function showLogin(msg,ok){document.body.classList.add('locked');
- const reg=LOGIN.mode==='register';
- $('#content').innerHTML=`<form class="card login" onsubmit="return ${reg?'submitRegister':'submitLogin'}(event)" autocomplete="on">
+ $('#content').innerHTML=`<form class="card login" onsubmit="return submitLogin(event)" autocomplete="on">
   <div class="logo" aria-hidden="true"><svg viewBox="0 0 48 48" width="24" height="24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M8 22 24 9l16 13"/><path d="M13 20v18h22V20"/><path d="M20 38v-9h8v9"/></svg></div>
-  <h1 style="font-size:22px;text-align:center">${reg?'Créer un compte':'Administration Ouvrage'}</h1>
-  <p class="mu" style="text-align:center;margin:6px 0 18px">${reg?'Créez votre compte administrateur, puis connectez-vous.':'Accès réservé aux administrateurs.'}</p>
+  <h1 style="font-size:22px;text-align:center">Administration Ouvrage</h1>
+  <p class="mu" style="text-align:center;margin:6px 0 18px">Accès réservé aux administrateurs.</p>
   ${msg?`<div class="${ok?'info':'alert'}" role="${ok?'status':'alert'}">${esc(msg)}</div>`:''}
-  ${reg
-    ?`<label class="l" for="rg-n">Nom complet</label><input class="fld" id="rg-n" autocomplete="name" required minlength="2" value="${esc(LOGIN.name)}">
-      <label class="l" for="rg-c">Adresse e-mail</label><input class="fld" id="rg-c" type="email" autocomplete="username" required value="${esc(LOGIN.contact)}">
-      <label class="l" for="rg-p">Mot de passe (8 caractères minimum)</label><input class="fld" id="rg-p" type="password" autocomplete="new-password" required minlength="8">
-      <label class="l" for="rg-p2">Confirmer le mot de passe</label><input class="fld" id="rg-p2" type="password" autocomplete="new-password" required minlength="8">
-      <button class="btn" id="lg-btn" type="submit" style="width:100%;justify-content:center">Créer mon compte</button>
-      <p class="mu" style="text-align:center;margin-top:14px">Déjà un compte ? <a href="#" style="color:var(--or)" onclick="LOGIN.mode='login';showLogin();return false">Se connecter</a></p>`
-    :(LOGIN.step===1
+  ${LOGIN.step===1
     ?`<label class="l" for="lg-c">Adresse e-mail</label><input class="fld" id="lg-c" type="email" autocomplete="username" required value="${esc(LOGIN.contact)}">
       <label class="l" for="lg-p">Mot de passe</label><input class="fld" id="lg-p" type="password" autocomplete="current-password" required>`
     :`<p class="mu" style="margin-bottom:10px">Saisissez le code à 6 chiffres de votre application d'authentification.</p>
-      <label class="l" for="lg-t">Code de vérification</label><input class="fld" id="lg-t" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required>`)}
-  ${reg?'':`<button class="btn" id="lg-btn" type="submit">${LOGIN.step===1?'Continuer':'Se connecter'}</button>
+      <label class="l" for="lg-t">Code de vérification</label><input class="fld" id="lg-t" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required>`}
+  <button class="btn" id="lg-btn" type="submit">${LOGIN.step===1?'Continuer':'Se connecter'}</button>
   ${LOGIN.step===2?'<button type="button" class="btn g" style="margin-top:8px" onclick="LOGIN.step=1;showLogin()">Retour</button>':''}
-  ${LOGIN.step===1?'<p class="mu" style="text-align:center;margin-top:14px">Pas encore de compte ? <a href="#" style="color:var(--or)" onclick="LOGIN.mode=\'register\';LOGIN.password=\'\';showLogin();return false">Créer un compte</a></p>':''}`}
+  ${LOGIN.step===1?'<p class="mu" style="text-align:center;margin-top:14px;font-size:12.5px">Pas de compte ? Les comptes administrateur sont créés sur le serveur avec <code>npm run create-admin</code>.</p>':''}
  </form>`;
- const first=document.querySelector('#rg-n,#lg-c,#lg-t');if(first)first.focus()}
-
-// Création de compte : le serveur crée le compte (POST /auth/register) ; ensuite l'utilisateur se connecte
-async function submitRegister(e){e.preventDefault();const btn=$('#lg-btn');btn.disabled=true;
- try{
-  const name=$('#rg-n').value.trim(),contact=$('#rg-c').value.trim(),pw=$('#rg-p').value,pw2=$('#rg-p2').value;
-  LOGIN.name=name;LOGIN.contact=contact;
-  if(pw.length<8){return showLogin('Le mot de passe doit contenir au moins 8 caractères')}
-  if(pw!==pw2){return showLogin('Les deux mots de passe ne sont pas identiques')}
-  const r=await apiRaw('/auth/register','POST',{name,contact,password:pw});
-  if(!r.ok)return showLogin(msgOf(r.data));
-  LOGIN={contact,password:'',step:1,mode:'login',name:''};
-  return showLogin('Compte créé. Vous pouvez maintenant vous connecter.',true);
- }catch(err){showLogin('Serveur injoignable, réessayez')}
- return false}
+ // Animation : carte à la première apparition, glissement au changement d'étape, rien sur un simple message d'erreur
+ const f=$('#content form');if(!LOGIN_SHOWN)anim.login(f);else if(LOGIN_SHOWN!==LOGIN.step)anim.login(f,LOGIN.step);LOGIN_SHOWN=LOGIN.step;
+ const first=document.querySelector('#lg-c,#lg-t');if(first)first.focus()}
 
 async function submitLogin(e){e.preventDefault();const btn=$('#lg-btn');btn.disabled=true;
  try{
@@ -581,11 +622,11 @@ async function submitLogin(e){e.preventDefault();const btn=$('#lg-btn');btn.disa
  }catch(err){showLogin('Serveur injoignable, réessayez')}
  return false}
 
-async function finishLogin(d){keepSession(d);LOGIN={contact:'',password:'',step:1,mode:'login',name:''};document.body.classList.remove('locked');
- try{await loadAdmin()}catch(e){toast(e.message)}renderNav();render()}
+async function finishLogin(d){keepSession(d);LOGIN={contact:'',password:'',step:1};LOGIN_SHOWN=0;document.body.classList.remove('locked');
+ try{await loadAdmin()}catch(e){toast(e.message)}renderNav();render();anim.view($('#content'))}
 async function logout(){const rt=sessionStorage.getItem('ouv-admin-rt');
  if(rt)await apiRaw('/auth/logout','POST',{refreshToken:rt}).catch(()=>null);
- sessionStorage.removeItem('ouv-admin-rt');TOK=null;LOGIN={contact:'',password:'',step:1,mode:'login',name:''};resetAdmin();showLogin()}
+ sessionStorage.removeItem('ouv-admin-rt');TOK=null;LOGIN={contact:'',password:'',step:1};resetAdmin();showLogin()}
 // Au chargement : session encore valide ? sinon page de connexion
 async function boot(){if(await renew()){finishLogin({accessToken:TOK,refreshToken:sessionStorage.getItem('ouv-admin-rt')})}else showLogin()}
 boot();

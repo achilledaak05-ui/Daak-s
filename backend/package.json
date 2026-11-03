@@ -1,0 +1,27 @@
+{
+  "name": "ouvrage-backend",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Backend Ouvrage : API client, prestataire et administration (Node.js + Express + MySQL)",
+  "main": "src/server.js",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node scripts/migrate.js && node src/server.js",
+    "dev": "node --env-file-if-exists=.env --watch src/server.js",
+    "migrate": "node scripts/migrate.js",
+    "create-admin": "node scripts/create-admin.js",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.0.0",
+    "gsap": "^3.13.0",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.2",
+    "mysql2": "^3.14.0",
+    "zod": "^4.1.0"
+  }
+}

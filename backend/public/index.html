@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ouvrage — Les sous-métiers à portée de main</title><meta name="theme-color" content="#000"><link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<style>
+:root{--tx:#f4f4f6;--mu:#9a9aa6;--or:#ff6a13;--or2:#ff9a3d;--card:#101012;--ln:#26262b;color-scheme:dark}
+*{box-sizing:border-box;margin:0}
+body{min-height:100dvh;background:radial-gradient(1200px 600px at 50% -10%,#ff6a1326,transparent 60%),#000;color:var(--tx);
+ font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;-webkit-font-smoothing:antialiased}
+.logo{font-weight:800;font-size:15px;letter-spacing:3px;color:var(--or2);text-transform:uppercase}
+h1{font-size:clamp(30px,6vw,52px);line-height:1.08;letter-spacing:-.03em;text-align:center;margin:14px 0 12px;max-width:760px}
+h1 em{font-style:normal;background:linear-gradient(135deg,var(--or),var(--or2));-webkit-background-clip:text;background-clip:text;color:transparent}
+p.lead{color:var(--mu);text-align:center;max-width:520px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;width:100%;max-width:780px;margin-top:40px}
+a.card{display:block;text-decoration:none;color:inherit;background:var(--card);border:1px solid var(--ln);border-radius:20px;padding:22px;transition:border-color .2s}
+a.card:hover,a.card:focus-visible{border-color:var(--or);outline:none}
+.ic{font-size:28px}.card h2{font-size:18px;margin:10px 0 4px}.card p{color:var(--mu);font-size:14px}
+.go{display:inline-block;margin-top:14px;font-weight:700;font-size:14px;color:var(--or2)}
+footer{margin-top:48px;color:#5c5c66;font-size:12px}
+</style></head>
+<body>
+<div class="logo" data-a>Ouvrage</div>
+<h1 data-a>Les <em>sous-métiers</em> vérifiés, à portée de main</h1>
+<p class="lead" data-a>Plombiers, électriciens, menuisiers, peintres… Décrivez votre besoin, recevez des offres de professionnels vérifiés et payez en toute sécurité.</p>
+<div class="grid">
+ <a class="card" href="/client/" data-c><div class="ic">🏠</div><h2>Je cherche un pro</h2><p>Trouver, réserver et suivre une prestation.</p><span class="go">Ouvrir l'application →</span></a>
+ <a class="card" href="/prestataire/" data-c><div class="ic">🛠️</div><h2>Je suis prestataire</h2><p>Recevoir des demandes et développer mon activité.</p><span class="go">Espace prestataire →</span></a>
+ <a class="card" href="/admin/" data-c><div class="ic">📊</div><h2>Administration</h2><p>Accès réservé à l'équipe Ouvrage.</p><span class="go">Se connecter →</span></a>
+</div>
+<footer data-a>© Ouvrage</footer>
+<script src="/vendor/gsap/gsap.min.js"></script>
+<script>
+if (window.gsap && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  gsap.timeline({ defaults: { ease: 'power3.out' } })
+    .from('[data-a]', { opacity: 0, y: 18, duration: .6, stagger: .08 })
+    .from('[data-c]', { opacity: 0, y: 26, scale: .97, duration: .55, stagger: .08 }, '-=.3');
+  document.querySelectorAll('[data-c]').forEach((c) => {
+    c.addEventListener('mouseenter', () => gsap.to(c, { y: -4, duration: .25 }));
+    c.addEventListener('mouseleave', () => gsap.to(c, { y: 0, duration: .25 }));
+  });
+}
+</script>
+</body></html>

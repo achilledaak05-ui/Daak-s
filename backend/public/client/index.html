@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Ouvrage</title><meta name="theme-color" content="#000">
+<title>Ouvrage</title><meta name="theme-color" content="#000"><link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <style>
 :root{--bg:#000;--card:#101012;--card2:#1b1b1f;--tx:#f4f4f6;--mu:#9a9aa6;--or:#ff6a13;--or2:#ff9a3d;--ok:#2ecc71;--ko:#ff4d4f;--bl:#3b82f6;--ln:#26262b;color-scheme:dark}
 *{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
@@ -101,6 +101,10 @@ label{font-size:12px;color:var(--mu);display:block;margin:2px 0 4px}
 /* Accessibilité : focus clavier visible, animations réduites si demandées */
 button:focus-visible,[role=switch]:focus-visible,[role=button]:focus-visible{outline:2px solid var(--or);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+/* Animations pilotées par GSAP (classe .gs posée au démarrage) : les animations CSS équivalentes sont neutralisées */
+.gs .scr,.gs .bub,.gs .toast,.gs .mod>div,.gs .menu .pn{animation:none}
+.gs .btn,.gs .stars-in button{transition:none}
+.mod.out,.menu.out{pointer-events:none}
 /* Cadre de l'application sur grand écran */
 @media(min-width:520px){
  body{align-items:center;background:radial-gradient(ellipse 60% 50% at 50% 100%,#ff6a1330,transparent 70%),#050506}
@@ -109,19 +113,22 @@ button:focus-visible,[role=switch]:focus-visible,[role=button]:focus-visible{out
  .scr{padding-top:40px}
 }
 </style></head><body><div id="app"></div>
+<script src="/vendor/gsap/gsap.min.js"></script>
 <script>
 const $=s=>document.querySelector(s),A=$('#app');
 // Éléments [role=switch] et [role=button] activables au clavier (Entrée / Espace)
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=switch],[role=button]')){e.preventDefault();e.target.click()}});
 
-/* ---------- Données de référence (démonstration) ---------- */
+/* ---------- Données de référence (identiques aux listes du serveur) ---------- */
 const CATS=[['Plomberie','🚰'],['Électricité','⚡'],['Menuiserie','🪚'],['Peinture','🎨'],['Maçonnerie','🧱'],['Climatisation','❄️'],['Nettoyage','🧽'],['Autres services','➕']];
 const CITIES=['Abidjan','Bouaké','Yamoussoukro','San-Pédro','Korhogo','Daloa','Man'];
 const PAY=['Wave','Orange Money','MTN Mobile Money','Moov Money','Carte Visa / Mastercard'];
-const PROS=[]; // Aucun prestataire fictif : la liste se remplit avec les inscriptions réelles
-const BST={attente:['En attente de confirmation','t-wa'],demande_devis:['Devis demandé','t-wa'],devis_propose:['Devis reçu','t-bl'],a_payer:['À payer','t-wa'],payee:['Payée','t-ok'],en_cours:['En cours','t-bl'],fin_signalee:['Fin à confirmer','t-wa'],terminee:['Terminée','t-ok'],annulee:['Annulée','t-ko'],refusee:['Refusée','t-ko'],litige:['Litige','t-ko']};
+const DISPUTES=['Prestation non conforme','Travaux non réalisés','Comportement du prestataire','Autre'];
+const PROS=[]; // Prestataires de l'accueil, chargés depuis l'API (/pros)
+const BST={attente:['En attente de confirmation','t-wa'],demande_devis:['Devis demandé','t-wa'],devis_propose:['Devis reçu','t-bl'],a_payer:['À payer','t-wa'],payee:['Payée','t-ok'],en_cours:['En cours','t-bl'],fin_signalee:['Fin à confirmer','t-wa'],terminee:['Terminée','t-ok'],annulee:['Annulée','t-ko'],refusee:['Refusée','t-ko'],expiree:['Expirée','t-ko'],litige:['Litige','t-ko']};
+const PST={pending:['Paiement en attente','t-wa'],success:['Payé','t-ok'],failed:['Paiement échoué','t-ko'],refund_pending:['Remboursement en cours','t-bl'],refunded:['Remboursé','t-bl']};
 const ACTIVE=['attente','demande_devis','devis_propose','a_payer','payee','en_cours','fin_signalee','litige'];
-const NEXT={attente:'Le prestataire doit confirmer la réservation.',demande_devis:'Le prestataire doit proposer un prix.',devis_propose:'Acceptez le devis pour passer au paiement.',a_payer:'Réglez la prestation pour la confirmer.',payee:'Le prestataire va démarrer les travaux.',en_cours:'Les travaux sont en cours.',fin_signalee:'Confirmez la bonne réalisation ou ouvrez un litige.',terminee:'Prestation terminée. Vous pouvez laisser un avis.',annulee:'Réservation annulée.',refusee:'Devis refusé.',litige:'Litige ouvert : l\'équipe Ouvrage vous contactera.'};
+const NEXT={attente:'Le prestataire doit confirmer la réservation.',demande_devis:'Le prestataire doit proposer un prix.',devis_propose:'Acceptez le devis pour passer au paiement.',a_payer:'Réglez la prestation pour la confirmer.',payee:'Le prestataire va démarrer les travaux.',en_cours:'Les travaux sont en cours.',fin_signalee:'Confirmez la bonne réalisation ou ouvrez un litige.',terminee:'Prestation terminée. Vous pouvez laisser un avis.',annulee:'Réservation annulée.',refusee:'Réservation refusée.',expiree:'Réservation expirée.',litige:'Litige ouvert : l\'équipe Ouvrage vous contactera.'};
 const MSG={a_payer:'Réservation confirmée : à payer',en_cours:'Les travaux ont commencé',fin_signalee:'Le prestataire a signalé la fin des travaux',terminee:'Prestation confirmée',litige:'Litige ouvert',refusee:'Devis refusé',annulee:'Réservation annulée'};
 const BACK_RES="S.tab='res';main()",BACK_ME="S.tab='me';main()";
 
@@ -133,9 +140,7 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 const ini=n=>(n||'?').split(' ').map(x=>x[0]).join('').slice(0,2).toUpperCase();
 const time=()=>new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
 const today=()=>new Date().toLocaleDateString('fr-FR');
-const rating=p=>p.rt!=null?p.rt:(RV(p).length?RV(p).reduce((a,x)=>a+x.s,0)/RV(p).length:0);
-const devisPrice=p=>Math.round(p.tarif*1.8/500)*500;
-const phSvg=e=>'data:image/svg+xml;utf8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 140"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3a2a22"/><stop offset="1" stop-color="#ff6a13"/></linearGradient></defs><rect width="200" height="140" fill="url(#g)"/><text x="100" y="92" font-size="60" text-anchor="middle">${e}</text></svg>`);
+const rating=p=>p.rt||0;
 
 /* ---------- État ---------- */
 const KEY='ouv-client';
@@ -146,50 +151,91 @@ S.requests=S.requests||[];
 // Remise à zéro unique : suppression des anciennes données de démonstration
 if(S.z!==1){S.favs=[];S.reviews={};S.bookings=[];S.tx=[];S.msgs={support:[]};S.unread={};S.notif=[];delete S.users.demo;S.z=1}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
-const RV=p=>S.reviews[p.id]||[];
 const activeCount=()=>S.bookings.filter(b=>ACTIVE.includes(b.st)).length;
 const unreadTotal=()=>Object.values(S.unread||{}).reduce((a,b)=>a+b,0);
+/* ---------- Animations (GSAP, facultatif) ----------
+   Sans GSAP ou si l'utilisateur demande moins d'animations, tout reste instantané.
+   On n'anime que opacity/transform et aucune action n'attend la fin d'une animation. */
+const anim=(()=>{const rm=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)');
+ const on=()=>!!window.gsap&&!(rm&&rm.matches);
+ if(on())document.documentElement.classList.add('gs');
+ const E='power2.out',CL='opacity,transform';
+ const items=(root,sel)=>root?Array.from(root.querySelectorAll(sel||'.jc,.zr,.card,.cr,.tile,.wi,.pcard,.bk')).filter(e=>!e.closest('.mod')||root.closest('.mod')):[];
+ return {
+  on,
+  // Entrée d'un écran ou d'un onglet : fondu + léger glissement
+  screen(el,dx=14){if(!on()||!el)return;gsap.fromTo(el,{opacity:0,x:dx},{opacity:1,x:0,duration:.3,ease:E,clearProps:CL})},
+  // Apparition en cascade des cartes d'une liste
+  list(root,sel,from=0){if(!on())return;const L=items(root,sel).slice(from,from+14);if(L.length)gsap.fromTo(L,{opacity:0,y:10},{opacity:1,y:0,duration:.32,ease:E,stagger:.04,clearProps:CL})},
+  els(L){if(!on()||!L||!L.length)return;gsap.fromTo(L,{opacity:0,y:8},{opacity:1,y:0,duration:.28,ease:E,stagger:.04,clearProps:CL})},
+  // Feuille du bas : ouverture / fermeture (l'élément est retiré à la fin, sans bloquer l'interface)
+  sheetIn(m){if(!on())return;gsap.fromTo(m,{opacity:0},{opacity:1,duration:.25,ease:E,clearProps:'opacity'});gsap.fromTo(m.firstElementChild,{y:60,opacity:0},{y:0,opacity:1,duration:.35,ease:'power3.out',clearProps:CL})},
+  sheetOut(m){m.classList.add('out');m.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id'));
+   if(!on())return m.remove();gsap.to(m.firstElementChild,{y:50,opacity:0,duration:.22,ease:'power2.in'});gsap.to(m,{opacity:0,duration:.25,ease:'power2.in',onComplete:()=>m.remove()})},
+  menuIn(m){if(!on())return;gsap.fromTo(m.querySelector('.pn'),{xPercent:-100},{xPercent:0,duration:.35,ease:'power3.out',clearProps:CL});gsap.fromTo(m.querySelector('.ov'),{opacity:0},{opacity:1,duration:.3,ease:E,clearProps:CL});anim.els(m.querySelectorAll('.it'))},
+  menuOut(m){m.classList.add('out');if(!on())return m.remove();gsap.to(m.querySelector('.pn'),{xPercent:-100,duration:.25,ease:'power2.in'});gsap.to(m.querySelector('.ov'),{opacity:0,duration:.25,onComplete:()=>m.remove()})},
+  toastIn(e){if(!on())return;gsap.fromTo(e,{opacity:0,y:14},{opacity:1,y:0,duration:.3,ease:'power3.out'})},
+  toastOut(e){if(!on())return e.remove();gsap.to(e,{opacity:0,y:8,duration:.25,ease:'power2.in',onComplete:()=>e.remove()})},
+  // Petit retour visuel au toucher (boutons principaux, cœur des favoris)
+  pop(el,s=.94){if(!on()||!el||!el.isConnected)return;gsap.fromTo(el,{scale:s},{scale:1,duration:.35,ease:'power3.out',clearProps:'transform'})},
+  // Écran d'accueil : logo puis textes et boutons
+  hero(root){if(!on()||!root)return;const t=gsap.timeline({defaults:{ease:'power3.out'}});
+   t.fromTo(root.querySelector('.logo'),{opacity:0,scale:.8,y:10},{opacity:1,scale:1,y:0,duration:.5,clearProps:CL})
+    .fromTo(root.querySelectorAll('.ob-logo .wm,.obt>*'),{opacity:0,y:16},{opacity:1,y:0,duration:.45,stagger:.06,clearProps:CL},'-=.25')}
+ }})();
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('.btn,.ob-b,.zbtn,.navp,.chip');if(b)anim.pop(b,b.classList.contains('chip')?.92:.96)},true);
+
 /* ---------- Interface commune ---------- */
-function toast(t){const e=document.createElement('div');e.className='toast';e.setAttribute('role','status');e.textContent=t;A.appendChild(e);setTimeout(()=>e.remove(),2200)}
-function go(h){A.innerHTML=`<div class="scr">${h}</div>`}
-function sub(t,body,back='main()'){go(`<div class="top"><button class="ib" aria-label="Retour" onclick="${back}">‹</button><h2>${t}</h2></div><div class="body">${body}</div>`)}
-function modal(h){const m=document.createElement('div');m.className='mod';m.setAttribute('role','dialog');m.setAttribute('aria-modal','true');m.innerHTML=`<div>${h}</div>`;m.onclick=e=>{if(e.target===m)m.remove()};A.appendChild(m);return m}
-const cm=()=>{const m=$('.mod');m&&m.remove()};
+function toast(t){const e=document.createElement('div');e.className='toast';e.setAttribute('role','status');e.textContent=t;A.appendChild(e);anim.toastIn(e);setTimeout(()=>anim.toastOut(e),2200)}
+// Écran courant : une nouvelle clé déclenche l'animation d'entrée ; réafficher le même écran (après une action) ne la rejoue pas
+let SCR='';
+function go(h,k){const same=k&&k===SCR;SCR=k||'';A.innerHTML=`<div class="scr">${h}</div>`;if(!same&&!String(k).startsWith('main:'))anim.screen(A.firstElementChild);return !same}
+function sub(t,body,back='main()'){const fresh=go(`<div class="top"><button class="ib" aria-label="Retour" onclick="${back}">‹</button><h2>${t}</h2></div><div class="body">${body}</div>`,'sub:'+t);if(fresh)anim.list($('.scr .body'))}
+function modal(h){const m=document.createElement('div');m.className='mod';m.setAttribute('role','dialog');m.setAttribute('aria-modal','true');m.innerHTML=`<div>${h}</div>`;m.onclick=e=>{if(e.target===m)anim.sheetOut(m)};A.appendChild(m);anim.sheetIn(m);return m}
+const cm=()=>{const m=$('.mod:not(.out)');m&&anim.sheetOut(m)};
 function gpsT(el){const on=el.classList.toggle('on');el.setAttribute('aria-checked',on);if(on&&navigator.geolocation){navigator.geolocation.getCurrentPosition(p=>{const a=$('#ba');if(a)a.value=`Position GPS ${p.coords.latitude.toFixed(5)}, ${p.coords.longitude.toFixed(5)}`},()=>toast('Position indisponible : saisissez l\'adresse'))}}
 // Interrupteur persistant : actif par défaut tant que la valeur n'est pas explicitement false
 function tgl(el,k){S[k]=S[k]===false;save();el.classList.toggle('on',S[k]!==false);el.setAttribute('aria-checked',S[k]!==false)}
 
 /* ---------- Connexion au backend (API Ouvrage) ---------- */
-const API_BASE=localStorage.getItem('ouv-api')||'http://localhost:3000';
+// Même origine par défaut ; l'app mobile peut surcharger l'hôte via localStorage 'ouv-api'
+const API_BASE=(localStorage.getItem('ouv-api')||'')+'/api/v1/client';
 let TOK=null; // jeton d'accès, gardé en mémoire seulement ; le jeton de rafraîchissement est dans localStorage
 async function apiRaw(path,method,body){const h={'Content-Type':'application/json'};if(TOK)h.Authorization='Bearer '+TOK;
- const r=await fetch(API_BASE+'/v1'+path,{method,headers:h,body:body===undefined?undefined:JSON.stringify(body)});
+ const r=await fetch(API_BASE+path,{method,headers:h,body:body===undefined?undefined:JSON.stringify(body)});
  const data=r.status===204?null:await r.json().catch(()=>null);return {ok:r.ok,status:r.status,data}}
 const apiMsg=d=>(d&&d.error&&d.error.message)||'Une erreur est survenue';
 function setSession(d){TOK=d.accessToken;localStorage.setItem('ouv-rt',d.refreshToken)}
-async function refreshSession(){const rt=localStorage.getItem('ouv-rt');if(!rt)return false;const r=await apiRaw('/auth/refresh','POST',{refreshToken:rt});
- if(!r.ok){localStorage.removeItem('ouv-rt');TOK=null;return false}setSession(r.data);return true}
-async function api(path,method='GET',body){let r=await apiRaw(path,method,body);
- if(r.status===401&&localStorage.getItem('ouv-rt')&&await refreshSession())r=await apiRaw(path,method,body);
+// Un seul rafraîchissement à la fois : réutiliser un refresh token déjà consommé révoque toutes les sessions côté serveur
+let RFP=null;
+function refreshSession(){return RFP||(RFP=(async()=>{try{const rt=localStorage.getItem('ouv-rt');if(!rt)return false;const r=await apiRaw('/auth/refresh','POST',{refreshToken:rt});
+ if(!r.ok){if(r.status<500){localStorage.removeItem('ouv-rt');TOK=null}return false}setSession(r.data);return true}finally{RFP=null}})())}
+async function api(path,method='GET',body){const call=()=>apiRaw(path,method,body).catch(()=>{throw new Error('Serveur injoignable, réessayez')});let r=await call();
+ if(r.status===401&&localStorage.getItem('ouv-rt')&&await refreshSession())r=await call();
  if(!r.ok)throw new Error(apiMsg(r.data));return r.data}
 const mapB=b=>({id:b.id,ref:b.ref,pro:b.proId,proName:b.proName,trade:b.trade,svc:b.service,mode:b.mode,st:b.status,addr:b.address,desc:b.description,
- date:b.scheduledAt?new Date(b.scheduledAt).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'}):'À définir',price:b.price,rated:0});
-const mapR=r=>({id:r.id,ref:r.ref,trade:r.trade,title:r.title,desc:r.description,addr:r.address,zone:r.zone,urgency:r.urgency,st:r.status,createdAt:Date.parse(r.createdAt)||0,offers:[]});
+ date:b.scheduledAt?new Date(b.scheduledAt).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'}):'À définir',price:b.price,
+ pay:b.paymentStatus||null,reviewed:!!b.reviewed,req:b.requestId||null,upd:b.updatedAt});
+const mapR=r=>({id:r.id,ref:r.ref,trade:r.trade,title:r.title,desc:r.description,addr:r.address,zone:r.zone,urgency:r.urgency,st:r.status,createdAt:Date.parse(r.createdAt)||0,oc:r.offersCount||0,offers:[]});
+// Remplace une réservation du cache par la version renvoyée par le serveur
+function upB(b){const m=mapB(b),i=S.bookings.findIndex(x=>x.id==m.id);if(i<0)S.bookings.unshift(m);else S.bookings[i]=m;save();return m}
 async function refreshBookings(){const g=await Promise.all(['en','ter','ann'].map(x=>api('/bookings?group='+x)));S.bookings=g.flatMap(x=>x.items).map(mapB);save()}
 async function refreshRequests(){S.requests=(await api('/requests')).items.map(mapR);save()}
-const mapPro=x=>({id:x.id,name:x.name,trade:(x.trades||[])[0]||'',skills:x.trades||[],city:x.city,zone:'',tarif:x.basePrice,bio:'',ph:['🔧'],rev:[],rt:x.rating??undefined,rc:x.ratingCount});
-async function loadPros(){const d=await api('/pros?page=1');PROS.length=0;d.items.forEach(x=>PROS.push(mapPro(x)))}
+const mapPro=x=>({id:x.id,name:x.name,trade:(x.trades||[])[0]||'',skills:x.trades||[],city:x.city,zones:x.zones||[],tarif:x.basePrice,bio:x.bio||'',available:x.available!==false,rt:x.rating,rc:x.ratingCount||0,reviews:x.reviews||[]});
+// Accueil : prestataires de la ville du client d'abord, complétés par les mieux notés
+async function loadPros(){const city=U().city,a=city?(await api('/pros?city='+encodeURIComponent(city))).items:[];
+ const b=a.length<3?(await api('/pros?page=1')).items:[];PROS.length=0;[...a,...b.filter(x=>!a.some(y=>y.id==x.id))].forEach(x=>PROS.push(mapPro(x)))}
 async function refreshFavs(){const d=await api('/favorites');S.favList=d.items;S.favs=d.items.map(x=>x.id);save()}
 async function refreshNotifs(){const d=await api('/notifications');S.notifList=d.items;S.unreadN=d.unread;save()}
 async function loadAll(){const me=await api('/me');S.me={...me,n:me.firstName+' '+me.lastName,gps:false};
  await Promise.all([refreshRequests(),refreshBookings(),refreshFavs(),refreshNotifs()]);
  try{await loadPros()}catch(e){/* annuaire indisponible : l'accueil reste utilisable */}save()}
 const U=()=>S.me||{n:'',city:'',zone:'',contact:'',gps:false};
-const nAvis=p=>p.rc!==undefined?p.rc:RV(p).length;
+const nAvis=p=>p.rc||0;
 
 /* ---------- Accueil / authentification ---------- */
 async function splash(){try{if(localStorage.getItem('ouv-rt')&&await refreshSession()){await loadAll();return main()}}catch(e){/* hors ligne : écran d'accueil */}welcome()}
-function welcome(){go(`<div class="ob"><div class="ob-logo"><div class="logo"><svg viewBox="0 0 48 48" width="40" height="40" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 22 24 9l16 13"/><path d="M13 20v18h22V20"/><path d="M20 38v-9h8v9"/></svg></div><div class="wm" style="margin-top:18px;font-size:14px">OUVRAGE</div></div><div class="obt" style="text-align:center"><h1>Compétences <span>à la demande</span></h1><p>Trouvez un professionnel vérifié près de chez vous. Réservez ou demandez un devis.</p><button class="ob-b or" onclick="reg(1)">Commencer</button><button class="lk" onclick="login()">Se connecter</button><div class="lnk">En continuant, vous acceptez les <b>Conditions d'utilisation</b> et la <b>Politique de confidentialité</b></div></div></div>`)}
+function welcome(){go(`<div class="ob"><div class="ob-logo"><div class="logo"><svg viewBox="0 0 48 48" width="40" height="40" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 22 24 9l16 13"/><path d="M13 20v18h22V20"/><path d="M20 38v-9h8v9"/></svg></div><div class="wm" style="margin-top:18px;font-size:14px">OUVRAGE</div></div><div class="obt" style="text-align:center"><h1>Compétences <span>à la demande</span></h1><p>Trouvez un professionnel vérifié près de chez vous. Réservez ou demandez un devis.</p><button class="ob-b or" onclick="reg(1)">Commencer</button><button class="lk" onclick="login()">Se connecter</button><div class="lnk">En continuant, vous acceptez les <b>Conditions d'utilisation</b> et la <b>Politique de confidentialité</b></div></div></div>`,'welcome');anim.hero($('.ob'))}
 function login(){go(`<div class="top"><button class="ib" aria-label="Retour" onclick="welcome()">‹</button><h2>Connexion</h2></div><div class="body"><label for="l1">Email ou téléphone</label><input id="l1" autocomplete="username" placeholder="jean@exemple.ci ou +225 07…"><label for="l2">Mot de passe</label><input id="l2" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"><button class="btn" onclick="doLogin()">Se connecter</button></div>`)}
 async function doLogin(){const d=await apiRaw('/auth/login','POST',{contact:$('#l1').value,password:$('#l2').value}).catch(()=>null);
  if(!d)return toast('Serveur injoignable, réessayez');if(!d.ok)return toast(apiMsg(d.data));setSession(d.data);try{await loadAll()}catch(e){return toast(e.message)}main()}
@@ -211,10 +257,10 @@ const svgI=k=>`<svg viewBox="0 0 24 24" width="22" height="22" fill="none" strok
 function main(){if(!S.me)return welcome();if(!['home','search','chat','res','me'].includes(S.tab))S.tab='home';
  const T=[['home','Accueil',0],['res','Réservations',activeCount()],['search','',0],['chat','Messages',unreadTotal()],['me','Profil',0]];
  const B=t=>t[0]=='search'?`<button class="np" aria-label="Nouvelle demande" onclick="reqNew()"><span class="navp" aria-hidden="true">+</span></button>`:`<button class="${S.tab==t[0]?'on':''}" aria-current="${S.tab==t[0]?'page':'false'}" onclick="S.tab='${t[0]}';save();main()"><i>${svgI(t[0])}</i>${t[1]}${t[2]?`<span class="dot">${t[2]}</span>`:''}</button>`;
- go(`<div id="v" style="flex:1;display:flex;flex-direction:column;overflow:hidden"></div><nav class="nav" aria-label="Navigation principale">${T.map(B).join('')}</nav>`);
- ({home,search,chat,res,me})[S.tab]()}
+ const fresh=go(`<div id="v" style="flex:1;display:flex;flex-direction:column;overflow:hidden"></div><nav class="nav" aria-label="Navigation principale">${T.map(B).join('')}</nav>`,'main:'+S.tab);
+ ({home,search,chat,res,me})[S.tab]();if(fresh){anim.screen($('#v'),10);anim.list($('#v'))}}
 async function notifs(){try{await refreshNotifs()}catch(e){toast(e.message)}const L=S.notifList||[];
- modal(`<h3 style="margin-bottom:10px">Notifications</h3>${L.map(n=>`<div class="card" style="${n.read?'':'border-color:var(--or)'}"><b>${esc(n.title)}</b>${n.body?`<div class="mu" style="margin-top:4px">${esc(n.body)}</div>`:''}<div class="mu" style="font-size:11px;margin-top:4px">${new Date(n.date).toLocaleString('fr-FR')}</div></div>`).join('')||'<div class="card mu">Aucune notification.</div>'}`);
+ modal(`<h3 style="margin-bottom:10px">Notifications</h3>${L.map(n=>`<div class="card" style="${n.read?'':'border-color:var(--or)'}"><b>${esc(n.title)}</b>${n.body?`<div class="mu" style="margin-top:4px">${esc(n.body)}</div>`:''}<div class="mu" style="font-size:11px;margin-top:4px">${new Date(n.date).toLocaleString('fr-FR')}</div></div>`).join('')||'<div class="card mu">Aucune notification.</div>'}`);anim.list($('.mod:not(.out)>div'),'.card');
  if(S.unreadN){try{await api('/notifications/read','POST');S.unreadN=0;save()}catch(e){/* lecture non enregistrée : réessayée à l'ouverture suivante */}}}
 const BELL=()=>S.unreadN?'<span class="bell-dot" aria-hidden="true"></span>':'';
 /* ---------- Accueil ---------- */
@@ -237,66 +283,81 @@ function svcs(){sub('Tous les services',`<div class="wlist">${CATS.map((c,i)=>`<
 function catGo(i){reqNew(CATS[i][0])}
 function menu(){const u=U(),m=document.createElement('div');m.className='menu';
  const I=[['🏠','Accueil',"S.tab='home';save();main()"],['🧰','Services',"svcs()"],['📋','Mes réservations',"S.tab='res';save();main()"],['💬','Messages',"S.tab='chat';save();main()"],['♥','Favoris',"favsV()"],['💳','Paiements et reçus',"paysV()"],['🆘','Assistance',"support()"],['⚙️','Paramètres',"settings()"],['🚪','Déconnexion',"logout()"]];
- m.innerHTML=`<div class="pn" role="dialog" aria-label="Menu"><div class="row" style="margin-bottom:12px"><div class="av" style="width:48px;height:48px">${ini(u.n)}</div><div style="min-width:0"><b>${esc(u.n)}</b><div class="mu">${esc(u.city)}</div></div></div><hr style="border:0;border-top:1px solid var(--ln);margin:4px 0 8px">${I.map(i=>`<div class="it" role="button" tabindex="0" onclick="this.closest('.menu').remove();${i[2]}">${i[0]}&nbsp; ${i[1]}</div>`).join('')}</div><div class="ov" onclick="this.parentNode.remove()"></div>`;A.appendChild(m)}
-function proCard(p){const r=rating(p);return `<div class="zr" role="button" tabindex="0" onclick="proView(${p.id})"><div class="av" style="width:48px;height:48px" aria-hidden="true">${ini(p.name)}</div><div style="flex:1;min-width:0"><div class="row"><b>${esc(p.name)}</b><span class="tag t-ok">✔ Vérifié</span></div><div class="mu">${esc(p.trade)} · ${esc(p.city)}</div><div class="mu"><span class="stars">★</span> ${nAvis(p)?r.toFixed(1)+' ('+nAvis(p)+' avis)':'Nouveau'}</div></div><div style="text-align:right"><div class="zp">dès ${money(p.tarif)}</div></div></div>`}
+ m.innerHTML=`<div class="pn" role="dialog" aria-label="Menu"><div class="row" style="margin-bottom:12px"><div class="av" style="width:48px;height:48px">${ini(u.n)}</div><div style="min-width:0"><b>${esc(u.n)}</b><div class="mu">${esc(u.city)}</div></div></div><hr style="border:0;border-top:1px solid var(--ln);margin:4px 0 8px">${I.map(i=>`<div class="it" role="button" tabindex="0" onclick="this.closest('.menu').remove();${i[2]}">${i[0]}&nbsp; ${i[1]}</div>`).join('')}</div><div class="ov" onclick="anim.menuOut(this.parentNode)"></div>`;A.appendChild(m);anim.menuIn(m)}
+function proCard(p){const r=rating(p);return `<div class="zr" role="button" tabindex="0" onclick="proView(${p.id})"><div class="av" style="width:48px;height:48px" aria-hidden="true">${ini(p.name)}</div><div style="flex:1;min-width:0"><div class="row"><b>${esc(p.name)}</b><span class="tag t-ok">✔ Vérifié</span></div><div class="mu">${esc(p.trade)} · ${esc(p.city)}</div><div class="mu"><span class="stars">★</span> ${nAvis(p)?r.toFixed(1)+' ('+nAvis(p)+' avis)':'Nouveau'}</div></div><div style="text-align:right"><div class="zp">${p.tarif?'dès '+money(p.tarif):'Sur devis'}</div></div></div>`}
 
 /* ---------- Recherche ---------- */
 function search(){$('#v').innerHTML=`<div class="top"><h2 style="font-size:24px">Recherche</h2></div><div class="body" style="padding-top:0">
- <div class="zs" style="margin:0 0 10px">🔍<input id="sq" aria-label="Rechercher" placeholder="Métier, nom, ville…" value="${esc(S.q)}" oninput="S.q=this.value;save();list()"></div>
+ <div class="zs" style="margin:0 0 10px">🔍<input id="sq" aria-label="Rechercher" placeholder="Nom du prestataire…" value="${esc(S.q)}" oninput="S.q=this.value;save();list()"></div>
  <div class="chips" style="flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none">${['',...CATS.map(c=>c[0])].map(c=>`<span class="chip ${S.cat==c?'on':''}" style="white-space:nowrap" role="button" tabindex="0" onclick="S.cat='${c}';save();search()">${c||'Tous'}</span>`).join('')}</div>
  <label for="sc">Ville</label><select id="sc" onchange="S.city=this.value;save();list()"><option value="">Toute la Côte d'Ivoire</option>${CITIES.map(c=>`<option ${S.city==c?'selected':''}>${c}</option>`).join('')}</select>
- <div id="sl"></div></div>`;list()}
-function list(){const q=S.q.toLowerCase().trim(),L=PROS.filter(p=>(!S.cat||p.trade==S.cat)&&(!S.city||p.city==S.city)&&(!q||[p.name,p.trade,p.city,p.zone,...p.skills].join(' ').toLowerCase().includes(q)));
- $('#sl').innerHTML=L.map(proCard).join('')||'<div class="card mu">Aucun prestataire ne correspond à votre recherche.</div>'}
+ <div id="sl"></div></div>`;drawList(true);list(0,0)}
+// Recherche côté serveur (/pros?trade&city&q&page), avec pagination « Afficher plus »
+let SR={k:null,page:1,more:false,items:[]},SRT=0,SRN=0;
+function list(more,delay=250){clearTimeout(SRT);SRT=setTimeout(()=>loadSearch(more),more?0:delay)}
+async function loadSearch(more){const qs=new URLSearchParams();if(S.cat)qs.set('trade',S.cat);if(S.city)qs.set('city',S.city);const q=S.q.trim().slice(0,80);if(q)qs.set('q',q);
+ const k=qs.toString(),page=more&&SR.k===k?SR.page+1:1,n=++SRN;qs.set('page',page);
+ try{const d=await api('/pros?'+qs);if(n!==SRN)return;const prev=SR.k===k?SR.items:[],from=page>1?prev.length:0,sig=x=>x.map(p=>p.id).join();
+  const items=page>1?prev.concat(d.items.map(mapPro)):d.items.map(mapPro),changed=page>1||sig(items)!==sig(prev);
+  SR={k,page,more:d.hasMore,items};if(changed)drawList(false,from)}
+ catch(e){if(n===SRN&&$('#sl')){toast(e.message);if(SR.k!==k){SR={k,page:1,more:false,items:[]};drawList()}}}}
+function drawList(cached,from=0){const el=$('#sl');if(!el)return;if(cached&&SR.k===null)return el.innerHTML='<div class="card mu">Recherche…</div>';
+ el.innerHTML=SR.items.map(proCard).join('')+(SR.more?'<button class="btn g" onclick="list(1)">Afficher plus</button>':'')||'<div class="card mu">Aucun prestataire ne correspond à votre recherche.</div>';
+ if(!cached)anim.list(el,'.zr',from)}
 
 /* ---------- Profil prestataire ---------- */
-async function proView(id){const p=PROS.find(x=>x.id==id);if(!p)return toast('Prestataire introuvable');
- try{const d=await api('/pros/'+id);Object.assign(p,{skills:d.trades,zone:(d.zones||[])[0]||'',bio:d.bio,rt:d.rating??undefined,rc:d.ratingCount});
-  S.reviews[p.id]=d.reviews.map(v=>({n:v.author,s:v.rating,t:v.comment||''}))}catch(e){toast(e.message)}
+async function proView(id){let p;
+ try{const d=await api('/pros/'+id);p=mapPro(d);S.favs=S.favs.filter(x=>x!=p.id).concat(d.favorite?[p.id]:[]);save()}catch(e){return toast(e.message)}
  const f=S.favs.includes(p.id),r=rating(p);
- sub('Prestataire',`<div class="card row"><div class="av" style="width:64px;height:64px;font-size:22px">${ini(p.name)}</div><div style="flex:1;min-width:0"><div class="row"><b style="font-size:17px">${esc(p.name)}</b></div><span class="tag t-ok">✔ Vérifié</span><div class="mu" style="margin-top:4px">${esc(p.trade)} · ${esc(p.zone)}, ${esc(p.city)}</div><div class="mu">${nAvis(p)?'<span class="stars">★</span> '+r.toFixed(1)+' ('+nAvis(p)+' avis)':'Nouveau prestataire'}</div></div></div>
- <div class="card"><div class="mu">Tarif de base</div><b style="font-size:17px;color:var(--or)">dès ${money(p.tarif)}</b><p style="margin-top:8px;font-size:13.5px">${esc(p.bio)}</p></div>
+ sub('Prestataire',`<div class="card row"><div class="av" style="width:64px;height:64px;font-size:22px">${ini(p.name)}</div><div style="flex:1;min-width:0"><div class="row"><b style="font-size:17px">${esc(p.name)}</b></div><span class="tag t-ok">✔ Vérifié</span>${p.available?'':' <span class="tag t-ko">Indisponible</span>'}<div class="mu" style="margin-top:4px">${esc(p.trade)} · ${esc(p.city)}</div><div class="mu">${nAvis(p)?'<span class="stars">★</span> '+r.toFixed(1)+' ('+nAvis(p)+' avis)':'Nouveau prestataire'}</div></div></div>
+ <div class="card"><div class="mu">Tarif de base</div><b style="font-size:17px;color:var(--or)">${p.tarif?'dès '+money(p.tarif):'Sur devis'}</b>${p.bio?`<p style="margin-top:8px;font-size:13.5px">${esc(p.bio)}</p>`:''}</div>
  <b>Compétences</b><div class="chips" style="margin:8px 0 14px">${p.skills.map(s=>`<span class="pch">${esc(s)}</span>`).join('')}</div>
- <b>Réalisations</b><div class="ph" style="margin:8px 0 14px">${p.ph.map((e,i)=>`<div style="background-image:url(${phSvg(e)})" role="img" aria-label="Réalisation ${i+1}"><span>Réal. ${i+1}</span></div>`).join('')}</div>
- <b>Avis clients</b>${RV(p).map(v=>`<div class="card" style="margin:8px 0 0"><div class="row sp"><b>${esc(v.n)}</b><span class="stars">${'★'.repeat(v.s)}</span></div><div class="mu" style="margin-top:4px">${esc(v.t)}</div></div>`).join('')||'<div class="card mu">Aucun avis pour le moment.</div>'}
- <div class="row" style="margin:14px 0 4px"><button class="btn g s" style="flex:1" aria-pressed="${f}" onclick="favT(${p.id})">${f?'♥ Favori':'♡ Ajouter aux favoris'}</button></div>
- <button class="btn" onclick="reqNew('${p.trade}')">Demander une intervention</button>`)}
+ ${p.zones.length?`<b>Zones d'intervention</b><div class="chips" style="margin:8px 0 14px">${p.zones.map(z=>`<span class="pch">${esc(z)}</span>`).join('')}</div>`:''}
+ <b>Avis clients</b>${p.reviews.map(v=>`<div class="card" style="margin:8px 0 0"><div class="row sp"><b>${esc(v.author)}</b><span class="stars">${'★'.repeat(v.rating)}</span></div><div class="mu" style="margin-top:4px">${esc(v.comment||'')}</div><div class="mu" style="font-size:11px;margin-top:2px">${new Date(v.date).toLocaleDateString('fr-FR')}</div></div>`).join('')||'<div class="card mu">Aucun avis pour le moment.</div>'}
+ <div class="row" style="margin:14px 0 4px"><button class="btn g s" id="favb" style="flex:1" aria-pressed="${f}" onclick="favT(${p.id})">${f?'♥ Favori':'♡ Ajouter aux favoris'}</button></div>
+ <button class="btn" onclick="reqNew('${esc(p.trade)}')">Demander une intervention</button>`)}
 function askText(title,hint,cb,secret){const m=modal(`<h3>${esc(title)}</h3><p class="mu" style="margin:6px 0 12px">${esc(hint)}</p>${secret?'<input id="at" type="password" autocomplete="current-password" aria-label="Mot de passe">':'<textarea id="at" rows="3" aria-label="Texte"></textarea>'}<button class="btn" id="atok">Confirmer</button>`);
  m.querySelector('#atok').onclick=async()=>{const v=m.querySelector('#at').value.trim();if(!v)return toast('Champ requis');m.remove();try{await cb(v)}catch(e){toast(e.message)}}}
 function delAccount(){askText('Supprimer mon compte','Confirmez avec votre mot de passe. Vos réservations et avis restent anonymisés.',async pw=>{await api('/me','DELETE',{password:pw});await logout();toast('Compte supprimé')},true)}
-async function favT(id){try{if(S.favs.includes(id))await api('/favorites/'+id,'DELETE');else await api('/favorites','POST',{proId:id});await refreshFavs();proView(id)}catch(e){toast(e.message)}}
+async function favT(id){const was=S.favs.includes(id);
+ try{await api('/favorites/'+id,was?'DELETE':'PUT');await refreshFavs()}catch(e){return toast(e.message)}
+ const f=S.favs.includes(id),el=$('#favb');if(el){el.textContent=f?'♥ Favori':'♡ Ajouter aux favoris';el.setAttribute('aria-pressed',f);anim.pop(el,.85)}toast(f?'Ajouté aux favoris':'Retiré des favoris')}
 /* ---------- Réservation ---------- */
 /* ---------- Réservations ---------- */
 const BCARD=b=>{const p=proOf(b),s=BST[b.st];return `<div class="jc" role="button" tabindex="0" onclick="bdet(${b.id})"><div class="row sp" style="align-items:flex-start"><div style="min-width:0"><b style="font-size:15px">${esc(b.svc)}</b><div class="mu" style="margin-top:3px">${esc(p.name)} · ${esc(b.addr)}</div></div><b style="color:var(--or);font-size:14px;white-space:nowrap">${b.price?money(b.price):'À définir'}</b></div><div class="row sp" style="margin-top:10px"><span class="tag ${s[1]}">${s[0]}</span><span class="mu">${esc(b.date)}</span></div></div>`};
 function resGroup(b){return ACTIVE.includes(b.st)?'en':(b.st=='terminee'?'ter':'ann')}
 function res(){const g=S.resSeg||'en',L=S.bookings.filter(b=>resGroup(b)==g),RQ=S.requests.filter(r=>g=='en'?OPEN_REQ.includes(r.st):g=='ann'?['annulee','expiree'].includes(r.st):false);
- $('#v').innerHTML=`<div class="top"><h2 style="font-size:24px">Mes réservations</h2></div><div class="body" style="padding-top:0"><div class="tabs2" role="tablist">${[['en','En cours'],['ter','Terminées'],['ann','Annulées']].map(x=>`<button role="tab" class="${g==x[0]?'on':''}" aria-selected="${g==x[0]}" onclick="S.resSeg='${x[0]}';save();res()">${x[1]}</button>`).join('')}</div>${RQ.map(reqCard).join('')}${L.map(BCARD).join('')||(RQ.length?'':'<div class="card mu">Aucune réservation dans cette liste.</div>')}</div>`}
-function bdet(id){const b=S.bookings.find(x=>x.id==id),p=proOf(b),s=BST[b.st],tx=S.tx.find(t=>t.bid==b.id);
+ $('#v').innerHTML=`<div class="top"><h2 style="font-size:24px">Mes réservations</h2></div><div class="body" style="padding-top:0"><div class="tabs2" role="tablist">${[['en','En cours'],['ter','Terminées'],['ann','Annulées']].map(x=>`<button role="tab" class="${g==x[0]?'on':''}" aria-selected="${g==x[0]}" onclick="S.resSeg='${x[0]}';save();res();anim.list($('#v'))">${x[1]}</button>`).join('')}</div>${RQ.map(reqCard).join('')}${L.map(BCARD).join('')||(RQ.length?'':'<div class="card mu">Aucune réservation dans cette liste.</div>')}</div>`}
+function bdet(id){const b=S.bookings.find(x=>x.id==id);if(!b)return toast('Réservation introuvable');const p=proOf(b),s=BST[b.st]||[b.st,''],ps=PST[b.pay];
  let act='';
  if(b.st=='devis_propose')act=`<div class="row" style="margin-top:12px"><button class="btn o" onclick="setB(${b.id},'refusee')">Refuser</button><button class="btn" onclick="setB(${b.id},'a_payer')">Accepter</button></div>`;
  else if(b.st=='a_payer')act=`<div class="row" style="margin-top:12px"><button class="btn g" onclick="setB(${b.id},'annulee')">Annuler</button><button class="btn" onclick="payM(${b.id})">Payer ${money(b.price)}</button></div>`;
- else if(b.st=='fin_signalee')act=`<div class="row" style="margin-top:12px"><button class="btn o" onclick="setB(${b.id},'litige')">Litige</button><button class="btn" onclick="setB(${b.id},'terminee')">Confirmer</button></div>`;
+ else if(b.st=='fin_signalee')act=`<div class="row" style="margin-top:12px"><button class="btn o" onclick="dispM(${b.id})">Litige</button><button class="btn" onclick="setB(${b.id},'terminee')">Confirmer</button></div>`;
  else if(['attente','demande_devis','payee'].includes(b.st))act=`<button class="btn g" style="margin-top:12px" onclick="setB(${b.id},'annulee')">Annuler la réservation</button>`;
  const dm='';
- const receipt=tx?`<div class="card" style="margin-top:12px"><b>Reçu</b><div class="kv"><span>N°</span><b>${tx.id}</b></div><div class="kv"><span>Moyen</span><b>${esc(tx.m)}</b></div><div class="kv"><span>Montant</span><b>${money(tx.a)}</b></div><div class="kv"><span>Date</span><b>${tx.d}</b></div><div class="kv"><span>Statut</span><b>${esc(tx.s)}</b></div></div>`:'';
- const rev=b.st=='terminee'&&!b.rated?`<div class="card" style="margin-top:12px"><b>Votre avis</b><div style="margin:8px 0"><div class="mu" style="margin-bottom:2px" id="rnl">Touchez les étoiles pour noter</div><div class="stars-in" role="radiogroup" aria-label="Note sur 5 étoiles">${[1,2,3,4,5].map(n=>`<button type="button" role="radio" aria-checked="false" aria-label="${n} étoile${n>1?'s':''}" data-n="${n}" onclick="pickStar(${n})">★</button>`).join('')}</div><input type="hidden" id="rn" value=""></div><label for="rt">Commentaire</label><textarea id="rt" rows="2" placeholder="Votre expérience"></textarea><button class="btn" onclick="sendRev(${b.id})">Publier l'avis</button></div>`:'';
- const rv=b.rated?`<div class="card mu" style="margin-top:12px">Votre avis : <span class="stars">${'★'.repeat(b.rated)}</span></div>`:'';
+ const receipt=ps?`<div class="card" style="margin-top:12px"><div class="row sp"><b>Paiement</b><span class="tag ${ps[1]}">${ps[0]}</span></div><div class="kv"><span>Réservation</span><b>${esc(b.ref||'')}</b></div><div class="kv"><span>Montant</span><b>${b.price?money(b.price):'—'}</b></div></div>`:'';
+ const rev=b.st=='terminee'&&!b.reviewed?`<div class="card" style="margin-top:12px"><b>Votre avis</b><div style="margin:8px 0"><div class="mu" style="margin-bottom:2px" id="rnl">Touchez les étoiles pour noter</div><div class="stars-in" role="radiogroup" aria-label="Note sur 5 étoiles">${[1,2,3,4,5].map(n=>`<button type="button" role="radio" aria-checked="false" aria-label="${n} étoile${n>1?'s':''}" data-n="${n}" onclick="pickStar(${n})">★</button>`).join('')}</div><input type="hidden" id="rn" value=""></div><label for="rt">Commentaire</label><textarea id="rt" rows="2" placeholder="Votre expérience"></textarea><button class="btn" onclick="sendRev(${b.id})">Publier l'avis</button></div>`:'';
+ const rv=b.reviewed?`<div class="card mu" style="margin-top:12px"><span class="stars">★</span> Merci, votre avis a été publié.</div>`:'';
  sub('Réservation',`<div class="bk"><div class="row sp"><b style="font-size:16px">${esc(p.name)}</b><span class="tag ${s[1]}">${s[0]}</span></div>
  <div class="kvs">${[['Service',b.svc],['Date',b.date],['Lieu',b.addr],['Type',b.mode=='devis'?'Demande de devis':'Réservation immédiate'],['Montant',b.price?money(b.price):'À définir']].map(x=>`<div class="kv2"><span>${esc(x[0])}</span><b>${esc(x[1])}</b></div>`).join('')}</div>
  <div class="kv2" style="border:0"><span>Description</span><b style="font-weight:500">${esc(b.desc)}</b></div></div>
- <div class="card mu">${NEXT[b.st]}</div>${act}${dm}${receipt}${rev}${rv}`,BACK_RES)}
-async function setB(id,st){
- if(st=='annulee')return askText('Annuler la réservation','Indiquez le motif (3 caractères minimum)',async t=>{await api(`/bookings/${id}/cancel`,'POST',{reason:t});await refreshBookings();toast('Réservation annulée');bdet(id)});
- if(st=='litige')return askText('Ouvrir un litige','Décrivez le problème (10 caractères minimum)',async t=>{await api(`/bookings/${id}/dispute`,'POST',{type:'Prestation non conforme',description:t});await refreshBookings();toast('Litige ouvert');bdet(id)});
+ <div class="card mu">${NEXT[b.st]||''}</div>${act}${dm}${receipt}${rev}${rv}`,BACK_RES)}
+// Chaque action renvoie la réservation à jour : on remplace la copie locale sans tout recharger
+async function setB(id,st){const b=S.bookings.find(x=>x.id==id);
+ if(st=='annulee')return askText('Annuler la réservation',(b&&b.st=='payee'?'Le paiement vous sera remboursé. ':'')+'Indiquez le motif (3 caractères minimum)',async t=>{upB(await api(`/bookings/${id}/cancel`,'POST',{reason:t}));toast('Réservation annulée');bdet(id)});
  const path={a_payer:'accept-quote',refusee:'refuse-quote',terminee:'confirm'}[st];
  if(!path)return toast('Action indisponible');
- try{await api(`/bookings/${id}/${path}`,'POST');await refreshBookings();toast('Mise à jour enregistrée');bdet(id)}catch(e){toast(e.message)}}
+ try{upB(await api(`/bookings/${id}/${path}`,'POST'));toast({a_payer:'Devis accepté',refusee:'Devis refusé',terminee:'Prestation confirmée'}[st]);bdet(id)}catch(e){toast(e.message)}}
+function dispM(id){const m=modal(`<h3>Ouvrir un litige</h3><p class="mu" style="margin:6px 0 12px">L'équipe Ouvrage examinera votre demande.</p><label for="dt">Motif</label><select id="dt">${DISPUTES.map(d=>`<option>${esc(d)}</option>`).join('')}</select><label for="dd">Description (10 caractères minimum)</label><textarea id="dd" rows="3"></textarea><button class="btn" id="dok">Ouvrir le litige</button>`);
+ m.querySelector('#dok').onclick=async()=>{const type=m.querySelector('#dt').value,description=m.querySelector('#dd').value.trim();if(description.length<10)return toast('Décrivez le problème (10 caractères minimum)');
+  anim.sheetOut(m);try{upB(await api(`/bookings/${id}/dispute`,'POST',{type,description}));toast('Litige ouvert');bdet(id)}catch(e){toast(e.message)}}}
 
-function payM(id){const b=S.bookings.find(x=>x.id==id);modal(`<h3>Paiement sécurisé</h3><p class="mu" style="margin:4px 0 12px">Montant : <b style="color:var(--or)">${money(b.price)}</b></p><label for="pm">Moyen de paiement</label><select id="pm">${PAY.map(m=>`<option>${m}</option>`).join('')}</select><p class="mu" style="margin-bottom:12px">Mode démonstration : aucun débit réel. En production, la confirmation vient du serveur du prestataire de paiement.</p><button class="btn" onclick="pay(${id})">Confirmer le paiement</button>`)}
-async function pay(id){try{await api(`/bookings/${id}/payments`,'POST',{method:$('#pm').value});cm();toast('Paiement lancé');await refreshBookings();bdet(id)}catch(e){cm();toast(e.message)}}
+function payM(id){const b=S.bookings.find(x=>x.id==id);modal(`<h3>Paiement sécurisé</h3><p class="mu" style="margin:4px 0 12px">Montant : <b style="color:var(--or)">${money(b.price)}</b></p><label for="pm">Moyen de paiement</label><select id="pm">${PAY.map(m=>`<option>${m}</option>`).join('')}</select><p class="mu" style="margin-bottom:12px">Le paiement est confirmé par l'opérateur ; la réservation passe alors à « Payée ».</p><button class="btn" onclick="pay(${id})">Confirmer le paiement</button>`)}
+async function pay(id){const method=$('#pm').value;cm();
+ try{const r=await api(`/bookings/${id}/payments`,'POST',{method});upB(r.booking);toast(r.status=='success'?'Paiement confirmé':'Paiement en attente de confirmation');bdet(id)}catch(e){toast(e.message)}}
 function pickStar(n){$('#rn').value=n;document.querySelectorAll('.stars-in button').forEach(b=>{const on=+b.dataset.n<=n;b.classList.toggle('on',on);b.setAttribute('aria-checked',+b.dataset.n===n)});$('#rnl').textContent=n+' étoile'+(n>1?'s':'')+' sur 5'}
 async function sendRev(id){const n=+$('#rn').value,t=$('#rt').value.trim();if(!n)return toast('Choisissez une note');if(!t)return toast('Ajoutez un commentaire');
- try{await api(`/bookings/${id}/review`,'POST',{rating:n,comment:t});await refreshBookings();toast('Avis publié');bdet(id)}catch(e){toast(e.message)}}
+ try{upB(await api(`/bookings/${id}/review`,'POST',{rating:n,comment:t}));toast('Avis publié');bdet(id)}catch(e){toast(e.message)}}
 /* ---------- Demandes : le client décrit son besoin, l'administration envoie les prestataires ---------- */
 const OPEN_REQ=['nouvelle','distribuee','proposee'];
 const REQST={nouvelle:['Recherche de prestataires','t-or'],distribuee:['Envoyée aux prestataires','t-bl'],proposee:['Offres reçues','t-ok'],choisie:['Prestataire choisi','t-ok'],annulee:['Annulée','t-ko'],expiree:['Expirée','t-ko']};

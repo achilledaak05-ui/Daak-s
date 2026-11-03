@@ -1,0 +1,35 @@
+# Blueprint Render : New > Blueprint, puis choisir ce dépôt.
+# La base MySQL est chez Aiven : renseigner DATABASE_URL et DB_SSL_CA à la création (sync: false).
+services:
+  - type: web
+    name: ouvrage
+    runtime: node
+    rootDir: backend
+    plan: free
+    region: frankfurt
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "22"
+      - key: DATABASE_URL
+        sync: false
+      - key: DB_SSL_CA
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATA_KEY
+        generateValue: true
+      - key: PAYMENT_WEBHOOK_SECRET
+        generateValue: true
+      - key: PAYMENTS_MODE
+        value: disabled
+      - key: CORS_ORIGINS
+        value: capacitor://localhost,https://localhost
+      - key: MIN_WITHDRAWAL
+        value: "1000"
+      - key: DISTRIBUTION_SIZE
+        value: "3"
